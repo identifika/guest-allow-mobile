@@ -1,75 +1,353 @@
+import 'dart:io';
+
+import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:get/get.dart';
 import 'package:guest_allow/configs/themes/main_color.dart';
+import 'package:guest_allow/modules/features/event/controllers/attend_event.controller.dart';
 import 'package:guest_allow/shared/widgets/circle_button.dart';
-import 'package:guest_allow/shared/widgets/custom_app_bar.dart';
-import 'package:guest_allow/shared/widgets/custom_shimmer_widget.dart';
+import 'package:lottie/lottie.dart';
 
 class AttendEventView extends StatelessWidget {
   const AttendEventView({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final controller = Get.put(AttendEventController());
+
     return Scaffold(
-      appBar: const PreferredSize(
-        preferredSize: Size(0, 0),
-        child: CustomAppBar(),
+      body: Obx(
+        () =>
+            controller.stateCamera.value.whenOrNull(
+              loading: () => const Center(
+                child: CircularProgressIndicator(),
+              ),
+              success: (data) => Obx(
+                () => controller.stateTakePicture.value.maybeWhen(
+                  success: (data) => showCapturedImage(data, context),
+                  orElse: () => buildCamera(context),
+                ),
+              ),
+            ) ??
+            const SizedBox(),
       ),
-      body: SingleChildScrollView(
-        child: SafeArea(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                child: _buildAppBar(context),
-              ),
-              const SizedBox(height: 12),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                decoration: BoxDecoration(
-                  color: MainColor.white,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(16),
-                  child: Image.asset(
-                    "assets/dummies/andreas-rasmussen-OUSa9MU4zZc-unsplash.jpg",
-                    fit: BoxFit.cover,
-                    height: 200,
-                    width: double.infinity,
+    );
+  }
+
+  Widget showCapturedImage(XFile imagePath, BuildContext context) {
+    return Stack(
+      children: [
+        Image.file(
+          File(imagePath.path),
+          width: 1.sw,
+          height: 1.sh,
+          fit: BoxFit.cover,
+        ),
+        Positioned(
+          top: 0,
+          left: 0,
+          right: 0,
+          child: SafeArea(
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 16,
                   ),
+                  child: _buildAppBar(context),
                 ),
-              ),
-              const SizedBox(height: 24),
-              // Event Detail
-              // Title
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 24),
-                child: Text(
-                  "Event Title",
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 8),
-              // Date
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 24),
-                child: Text(
-                  "Date",
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: MainColor.greyTextColor,
-                  ),
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
+        Positioned(
+          bottom: 0,
+          left: 0,
+          right: 0,
+          child: Container(
+            color: Colors.black.withOpacity(0.7),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 24,
+              vertical: 16,
+            ),
+            child: Column(
+              children: [
+                Text(
+                  "Your face has been captured",
+                  style: TextStyle(
+                    fontSize: 16.sp,
+                    color: Colors.white,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget buildCamera(BuildContext context) {
+    var controller = AttendEventController.to;
+    return Stack(
+      children: [
+        Stack(
+          children: [
+            _cameraLayout(controller),
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              child: SafeArea(
+                child: Column(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 16,
+                      ),
+                      child: _buildAppBar(context),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            _livenessWIdget(controller)
+          ],
+        ),
+        // Countdowm
+        _countdownWidget(controller),
+      ],
+    );
+  }
+
+  Align _countdownWidget(AttendEventController controller) {
+    return Align(
+      alignment: Alignment.topCenter,
+      child: Obx(
+        () => controller.stateLiveness.value.maybeWhen(
+          success: (data) => Obx(
+            () => controller.countDown.value > 0
+                ? Container(
+                    width: 1.sw,
+                    height: 1.sh,
+                    color: Colors.black.withOpacity(0.7),
+                    child: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            "Camera will take of your face in",
+                            style: TextStyle(
+                              fontSize: 16.sp,
+                              color: Colors.white,
+                            ),
+                          ),
+                          Text(
+                            controller.countDown.value.toString(),
+                            style: TextStyle(
+                              fontSize: 58.sp,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                : const SizedBox(),
+          ),
+          orElse: () => const SizedBox(),
+        ),
       ),
+    );
+  }
+
+  Align _livenessWIdget(AttendEventController controller) {
+    return Align(
+      alignment: Alignment.bottomCenter,
+      child: Obx(
+        () => controller.stateLiveness.value.maybeWhen(
+          success: (data) => Padding(
+            padding: EdgeInsets.only(bottom: 30.h),
+            child: GestureDetector(
+              child: Container(
+                height: 100.h,
+                width: 100.h,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.white, width: 4),
+                  shape: BoxShape.circle,
+                ),
+                child: Container(
+                  height: 80.h,
+                  width: 80.h,
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          orElse: () => GetBuilder<AttendEventController>(
+              id: 'animation',
+              builder: (state) {
+                String assetPathLottie =
+                    state.assetsPath[state.selectedMotion] ?? '';
+                String wording = state.wordings[state.selectedMotion] ?? '';
+                return Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    LottieBuilder.asset(
+                      assetPathLottie,
+                      height: 100.h,
+                    ),
+                    Text(
+                      wording,
+                      style: TextStyle(
+                        fontSize: 16.sp,
+                        color: Colors.white,
+                      ),
+                    ),
+                    SizedBox(
+                      height: 40.h,
+                    ),
+                  ],
+                );
+              }),
+        ),
+      ),
+    );
+  }
+
+  Stack _cameraLayout(AttendEventController controller) {
+    return Stack(
+      children: [
+        Transform.scale(
+          alignment: Alignment.topCenter,
+          scale: controller.scaleCamera,
+          child: CameraPreview(
+            controller.cameraController,
+          ),
+        ),
+        Transform.scale(
+          scale: controller.scaleCamera,
+          child: ColorFiltered(
+            colorFilter: ColorFilter.mode(
+              Colors.black.withOpacity(0.7),
+              BlendMode.srcOut,
+            ),
+            child: Container(
+              width: double.infinity,
+              height: double.infinity,
+              padding: (Platform.isAndroid)
+                  ? EdgeInsets.symmetric(
+                      horizontal: 20.w,
+                    )
+                  : null,
+              decoration: const BoxDecoration(
+                color: Colors.transparent,
+              ),
+              child: Stack(
+                children: [
+                  Container(
+                    width: 1.sw,
+                    height: 1.sh,
+                    decoration: BoxDecoration(
+                      color: Colors.black.withAlpha(1),
+                      // make oval
+                      borderRadius: BorderRadius.all(
+                        Radius.circular(330.w),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    child: AspectRatio(
+                      aspectRatio: 1,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            width: 260.w,
+                            height: 360.h,
+                            decoration: BoxDecoration(
+                              color: Colors.black,
+                              // make oval
+                              borderRadius: BorderRadius.all(
+                                Radius.circular(330.w),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+        Positioned(
+          bottom: 160.h,
+          left: 0,
+          right: 0,
+          child: Obx(
+            () => controller.isOnArea.value
+                ? Column(
+                    children: [
+                      Text(
+                        "Please put your face in the oval area",
+                        style: TextStyle(
+                          fontSize: 16.sp,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ],
+                  )
+                : Container(
+                    margin: EdgeInsets.symmetric(
+                      horizontal: 60.w,
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 4,
+                      vertical: 4,
+                    ),
+                    decoration: const BoxDecoration(
+                      border: Border.fromBorderSide(
+                        BorderSide(
+                          color: MainColor.danger,
+                          width: 2,
+                        ),
+                      ),
+                      borderRadius: BorderRadius.all(
+                        Radius.circular(16),
+                      ),
+                    ),
+                    child: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            "You are not in the event area, please move to the event area",
+                            style: TextStyle(
+                              fontSize: 16.sp,
+                              color: MainColor.danger,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -86,7 +364,11 @@ class AttendEventView extends StatelessWidget {
           ),
           const Text(
             "Attend Event",
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: MainColor.white,
+            ),
           ),
           CircleButton(
             icon: const Icon(
@@ -98,11 +380,21 @@ class AttendEventView extends StatelessWidget {
                 context: context,
                 builder: (context) {
                   return Container(
-                    height: 200,
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
-                    child: const Column(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 16,
+                    ),
+                    child: Column(
                       children: [
-                        ButtonBar(),
+                        ListTile(
+                          title: const Text("Show QR Code"),
+                          onTap: () {},
+                        ),
+                        ListTile(
+                          title: const Text("Show Maps"),
+                          onTap: () {},
+                        ),
                       ],
                     ),
                   );

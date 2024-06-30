@@ -6,33 +6,32 @@ class DioErrorHelper {
     switch (dioError.type) {
       case DioExceptionType.cancel:
         errorMessage =
-            'Maaf, permintaan ke server dibatalkan. Silahkan coba lagi.';
+            'Sorry, the request to the server was cancelled. Please try again.';
         break;
       case DioExceptionType.connectionTimeout:
         errorMessage =
-            'Maaf, koneksi terputus karena waktu yang ditentukan telah habis. Silakan coba lagi.';
+            'Sorry, the connection was interrupted because the specified time has expired. Please try again.';
         break;
       case DioExceptionType.receiveTimeout:
         errorMessage =
-            'Maaf, waktu untuk menerima data telah habis. Silakan coba lagi.';
+            'Sorry, the time to receive data has expired. Please try again.';
         break;
       case DioExceptionType.sendTimeout:
         errorMessage =
-            'Maaf, permintaan tidak dapat terkirim karena waktu yang diberikan telah berakhir. Silakan coba lagi';
+            'Sorry, the request could not be sent because the allotted time has expired. Please try again.';
         break;
       case DioExceptionType.badResponse:
         errorMessage = _handleStatusCode(dioError.response?.statusCode);
         break;
       case DioExceptionType.unknown:
         if ((dioError.message ?? '').contains('SocketException')) {
-          errorMessage = 'Tidak ada koneksi internet. Silakan coba lagi.';
+          errorMessage = 'No internet connection. Please try again.';
           break;
         }
-        errorMessage =
-            'Maaf, terjadi kesalahan yang tidak terduga. Silakan coba lagi.';
+        errorMessage = 'Sorry, an unexpected error occurred. Please try again.';
         break;
       default:
-        errorMessage = 'Terjadi kesalahan pada sistem, silahkan coba lagi';
+        errorMessage = 'A system error occurred, please try again.';
         break;
     }
     return errorMessage;
@@ -41,25 +40,25 @@ class DioErrorHelper {
   static String _handleStatusCode(int? statusCode) {
     switch (statusCode) {
       case 400:
-        return 'Maaf, permintaan tidak valid atau tidak dapat diproses. Silakan coba lagi.';
+        return 'Sorry, the request is invalid or cannot be processed. Please try again.';
       case 401:
-        return 'Maaf, otentikasi gagal. Silahkan coba lagi.';
+        return 'Sorry, authentication failed. Please try again.';
       case 403:
-        return 'Maaf, pengguna yang terotentikasi tidak diizinkan untuk mengakses titik API yang ditentukan. Silakan coba lagi.';
+        return 'Sorry, the authenticated user is not allowed to access the specified API endpoint. Please try again.';
       case 404:
-        return 'Maaf, sumber yang Anda cari tidak ditemukan (Error 404). Silakan coba lagi.';
+        return 'Sorry, the resource you are looking for was not found (Error 404). Please try again.';
       case 405:
-        return 'Maaf, metode yang digunakan tidak diizinkan. Harap periksa header "Allow" untuk melihat metode HTTP yang diizinkan. Silakan coba lagi.';
+        return 'Sorry, the method used is not allowed. Please check the "Allow" header to see the allowed HTTP methods. Please try again.';
       case 415:
-        return 'Maaf, jenis media yang diminta tidak didukung. Jenis konten atau nomor versi yang diminta tidak valid. Silakan coba lagi.';
+        return 'Sorry, the requested media type is not supported. The requested content type or version number is invalid. Please try again.';
       case 422:
-        return 'Maaf, validasi data gagal. Silakan coba lagi.';
+        return 'Sorry, data validation failed. Please try again.';
       case 429:
-        return 'Maaf, terlalu banyak permintaan. Silakan coba lagi.';
+        return 'Sorry, too many requests. Please try again.';
       case 500:
-        return 'Maaf, terjadi kesalahan internal server. Silakan coba lagi.';
+        return 'Sorry, an internal server error occurred. Please try again.';
       default:
-        return 'Maaf, terjadi kesalahan yang tidak terduga. Silakan coba lagi.';
+        return 'Sorry, an unexpected error occurred. Please try again.';
     }
   }
 }

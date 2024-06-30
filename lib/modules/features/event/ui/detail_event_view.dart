@@ -2,14 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_conditional_rendering/flutter_conditional_rendering.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:guest_allow/configs/routes/main_route.dart';
+import 'package:guest_allow/modules/features/event/ui/widgets/map_widget.dart';
 import 'package:guest_allow/modules/features/home/responses/get_popular_event.response.dart';
 import 'package:guest_allow/shared/widgets/countdown_timer.widget.dart';
 import 'package:guest_allow/shared/widgets/custom_dialog.widget.dart';
 import 'package:readmore/readmore.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:guest_allow/configs/themes/main_color.dart';
 import 'package:guest_allow/modules/features/event/controllers/detail_event.controller.dart';
-import 'package:guest_allow/modules/features/event/controllers/detail_map.controller.dart';
 import 'package:guest_allow/shared/widgets/circle_button.dart';
 import 'package:guest_allow/shared/widgets/custom_app_bar.dart';
 import 'package:guest_allow/shared/widgets/custom_shimmer_widget.dart';
@@ -173,6 +173,8 @@ class DetailView extends StatelessWidget {
     EventDetailType type,
     EventStatus eventStatus,
   ) {
+    var now = DateTime.now();
+
     return ClipRRect(
       borderRadius: const BorderRadius.only(
         topLeft: Radius.circular(16),
@@ -182,47 +184,99 @@ class DetailView extends StatelessWidget {
         height: 80,
         padding: const EdgeInsets.symmetric(horizontal: 34, vertical: 16),
         decoration: const BoxDecoration(color: Colors.white),
-        child: _SetEventStatus(
-          eventModel: eventModel,
-          type: type,
-          eventStatus: eventStatus,
+        child: Conditional.single(
+          context: context,
+          conditionBuilder: (context) => type == EventDetailType.guest,
+          fallbackBuilder: (_) => _SetEventStatus(
+            eventModel: eventModel,
+            type: type,
+            eventStatus: eventStatus,
+          ),
+          widgetBuilder: (_) => ConditionalSwitch.single(
+            context: context,
+            valueBuilder: (context) => eventStatus,
+            caseBuilders: {
+              EventStatus.onGoing: (context) => const SizedBox(),
+              // SizedBox(
+              //       width: 1.sw,
+              //       child: ElevatedButton(
+              //         onPressed: () {},
+              //         style: ElevatedButton.styleFrom(
+              //           backgroundColor: MainColor.primary,
+              //           elevation: 0,
+              //           shape: RoundedRectangleBorder(
+              //             borderRadius: BorderRadius.circular(16),
+              //           ),
+              //           padding: const EdgeInsets.symmetric(
+              //             vertical: 10,
+              //             horizontal: 20,
+              //           ),
+              //           maximumSize: const Size(200, 150),
+              //         ),
+              //         child: const Text(
+              //           "Show Attendees",
+              //           style: TextStyle(color: Colors.white, fontSize: 16),
+              //         ),
+              //       ),
+              //     ),
+              EventStatus.upcoming: (context) => SizedBox(
+                    width: 1.sw,
+                    child: ElevatedButton(
+                      onPressed: now.isAfter(tz.TZDateTime.from(
+                        DateTime.tryParse(eventModel.startDate ?? "") ??
+                            DateTime.now(),
+                        tz.getLocation(eventModel.timeZone ?? ''),
+                      ).toLocal())
+                          ? null
+                          : () {
+                              Get.find<DetailEventController>().dialogJoinEvent(
+                                eventModel.id ?? "",
+                                eventModel.title ?? "",
+                              );
+                            },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: MainColor.primary,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 10,
+                          horizontal: 20,
+                        ),
+                        maximumSize: const Size(200, 150),
+                      ),
+                      child: const Text(
+                        "Join Event",
+                        style: TextStyle(color: Colors.white, fontSize: 16),
+                      ),
+                    ),
+                  ),
+              EventStatus.finished: (context) => SizedBox(
+                    width: 1.sw,
+                    child: ElevatedButton(
+                      onPressed: null,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: MainColor.primary,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 10,
+                          horizontal: 20,
+                        ),
+                        maximumSize: const Size(200, 150),
+                      ),
+                      child: const Text(
+                        "Event is finished",
+                        style: TextStyle(color: Colors.white, fontSize: 16),
+                      ),
+                    ),
+                  ),
+            },
+          ),
         ),
-
-        //   child: Conditional.single(
-        //     context: context,
-        //     conditionBuilder: (context) => eventModel.participantsExists ?? false,
-        //     widgetBuilder: (context) => _SetEventStatus(
-        //       eventModel: eventModel,
-        //       type: type,
-        //       eventStatus: eventStatus,
-        //     ),
-        //     fallbackBuilder: (context) => SizedBox(
-        //       width: 1.sw,
-        //       child: ElevatedButton(
-        //         onPressed: now.isAfter(
-        //                 DateTime.tryParse(eventModel.startDate ?? "") ??
-        //                     DateTime.now())
-        //             ? null
-        //             : () {
-        //                 Get.find<DetailEventController>().dialogJoinEvent(
-        //                     eventModel.id ?? "", eventModel.title ?? "");
-        //               },
-        //         style: ElevatedButton.styleFrom(
-        //             backgroundColor: MainColor.primary,
-        //             elevation: 0,
-        //             disabledBackgroundColor: MainColor.greyTextColor,
-        //             shape: RoundedRectangleBorder(
-        //                 borderRadius: BorderRadius.circular(12)),
-        //             padding:
-        //                 const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
-        //             maximumSize: const Size(200, 150)),
-        //         child: const Text(
-        //           "Join Event",
-        //           style: TextStyle(color: Colors.white, fontSize: 16),
-        //         ),
-        //       ),
-        //     ),
-        //   ),
       ),
     );
   }
@@ -230,6 +284,7 @@ class DetailView extends StatelessWidget {
   Widget _buildAppBar(
     BuildContext context,
     EventDetailType type,
+    EventStatus eventStatus,
   ) =>
       Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -245,7 +300,8 @@ class DetailView extends StatelessWidget {
             },
           ),
           Visibility(
-            visible: type == EventDetailType.owner,
+            visible: type == EventDetailType.owner ||
+                type == EventDetailType.receptionist,
             child: CircleButton(
               icon: const Icon(
                 Icons.more_horiz,
@@ -255,14 +311,10 @@ class DetailView extends StatelessWidget {
                 showModalBottomSheet(
                   context: context,
                   builder: (context) {
-                    return Container(
-                      height: 200,
-                      padding: const EdgeInsets.symmetric(horizontal: 24),
-                      child: const Column(
-                        children: [
-                          ButtonBar(),
-                        ],
-                      ),
+                    return _modalBottomSheet(
+                      context,
+                      type,
+                      eventStatus,
                     );
                   },
                 );
@@ -271,6 +323,108 @@ class DetailView extends StatelessWidget {
           )
         ],
       );
+
+  Container _modalBottomSheet(
+      BuildContext context, EventDetailType type, EventStatus eventStatus) {
+    return Container(
+      width: 1.sw,
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+      child: Column(
+        children: [
+          ConditionalSwitch.single(
+            context: context,
+            valueBuilder: (context) => type,
+            caseBuilders: {
+              EventDetailType.owner: (context) => Column(
+                    children: [
+                      ...ConditionalSwitch.list(
+                        context: context,
+                        valueBuilder: (context) => eventStatus,
+                        caseBuilders: {
+                          EventStatus.onGoing: (context) => [
+                                ListTile(
+                                  onTap: () {},
+                                  title: const Text("View Attendees"),
+                                ),
+                                ListTile(
+                                  onTap: () {},
+                                  title: const Text("View Receptionist"),
+                                ),
+                                ListTile(
+                                  onTap: () {},
+                                  title: const Text("Receive Attendees"),
+                                ),
+                              ],
+                          EventStatus.upcoming: (context) => [
+                                ListTile(
+                                  onTap: () {},
+                                  title: const Text("View Attendees"),
+                                ),
+                                ListTile(
+                                  onTap: () {},
+                                  title: const Text("View Receptionist"),
+                                ),
+                                ListTile(
+                                  onTap: () {},
+                                  title: const Text("Edit Event"),
+                                ),
+                                ListTile(
+                                  onTap: () {},
+                                  title: const Text("Cancel Event"),
+                                ),
+                              ],
+                          EventStatus.finished: (context) => [
+                                ListTile(
+                                  onTap: () {},
+                                  title: const Text("View Attendees"),
+                                ),
+                                ListTile(
+                                  onTap: () {},
+                                  title: const Text("Recreate Event"),
+                                ),
+                              ],
+                        },
+                      ),
+                    ],
+                  ),
+              EventDetailType.receptionist: (context) => Column(
+                    children: [
+                      ...ConditionalSwitch.list(
+                        context: context,
+                        valueBuilder: (context) => eventStatus,
+                        caseBuilders: {
+                          EventStatus.onGoing: (context) => [
+                                ListTile(
+                                  onTap: () {},
+                                  title: const Text("Receive Attendees"),
+                                ),
+                              ],
+                          EventStatus.upcoming: (context) => [
+                                ListTile(
+                                  onTap: () {},
+                                  title: const Text("View Attendees"),
+                                ),
+                                ListTile(
+                                  onTap: () {},
+                                  title: const Text("View Receptionist"),
+                                ),
+                              ],
+                          EventStatus.finished: (context) => [
+                                ListTile(
+                                  onTap: () {},
+                                  title: const Text("View Attendees"),
+                                ),
+                              ],
+                        },
+                      ),
+                    ],
+                  ),
+            },
+          ),
+        ],
+      ),
+    );
+  }
 
   _buildDescription(
     BuildContext context,
@@ -295,6 +449,7 @@ class DetailView extends StatelessWidget {
             _buildAppBar(
               context,
               type,
+              eventStatus,
             ),
             Padding(
               padding: const EdgeInsets.symmetric(
@@ -557,27 +712,37 @@ class DetailView extends StatelessWidget {
                       color: MainColor.greyTextColor,
                     ),
                   ),
-                  const SizedBox(height: 24),
-                  const Text(
-                    "Participants",
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  SizedBox(
-                    height: 24,
-                    child: StackParticipant(
-                      createdBy: eventModel.participants,
-                      fontSize: 12,
-                      width: 20,
-                      height: 20,
-                      positionText: (eventModel.participantsCount ?? 0) > 5
-                          ? 95
-                          : ((eventModel.participantsCount ?? 0) * 12.0) + 16,
-                      totalParticipant: eventModel.participants?.length ?? 0,
-                    ),
+                  ...Conditional.list(
+                    context: context,
+                    conditionBuilder: (BuildContext context) =>
+                        eventModel.participants != null &&
+                        eventModel.participants!.isNotEmpty,
+                    widgetBuilder: (context) => [
+                      const SizedBox(height: 24),
+                      const Text(
+                        "Participants",
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      SizedBox(
+                        height: 24,
+                        child: StackParticipant(
+                          createdBy: eventModel.participants,
+                          fontSize: 12,
+                          width: 20,
+                          height: 20,
+                          positionText: (eventModel.participantsCount ?? 0) > 5
+                              ? 95
+                              : ((eventModel.participantsCount ?? 0) * 12.0) +
+                                  16,
+                          totalParticipant:
+                              eventModel.participants?.length ?? 0,
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 100),
                 ],
@@ -690,7 +855,22 @@ class _SetEventStatus extends StatelessWidget {
                               Get.find<DetailEventController>()
                                   .attendOnlineEvent(eventModel.link ?? "");
                             } else {
-                              CustomDialogWidget.showDialogSuccess();
+                              if (eventModel.myArrival != null) {
+                                showModalBottomSheet(
+                                  context: context,
+                                  builder: (context) {
+                                    return _modalBottomSheet(
+                                      context,
+                                      eventModel,
+                                    );
+                                  },
+                                );
+                              } else {
+                                Get.toNamed(
+                                  MainRoute.attendEvent,
+                                  arguments: eventModel,
+                                );
+                              }
                             }
                           },
                           style: ElevatedButton.styleFrom(
@@ -705,9 +885,12 @@ class _SetEventStatus extends StatelessWidget {
                             ),
                             maximumSize: const Size(200, 150),
                           ),
-                          child: const Text(
-                            "Attend Event",
-                            style: TextStyle(color: Colors.white, fontSize: 16),
+                          child: Text(
+                            eventModel.myArrival != null && eventModel.type == 1
+                                ? "You are in this event"
+                                : "Join Event",
+                            style: const TextStyle(
+                                color: Colors.white, fontSize: 16),
                           ),
                         ),
                       ),
@@ -830,58 +1013,28 @@ class _SetEventStatus extends StatelessWidget {
               ),
         },
       ),
-      // Conditional.single(
-      //   context: context,
-      //   conditionBuilder: (context) =>
-      //       eventStatus == EventStatus.onGoing &&
-      //       (type == EventDetailType.participant),
-      //   fallbackBuilder: (context) => Row(
-      //     mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      //     crossAxisAlignment: CrossAxisAlignment.center,
-      //     children: [
-      //       const Text(
-      //         "You're already joined",
-      //       ),
-      //       ElevatedButton(
-      //         onPressed: () {
-      //           Get.find<DetailEventController>().dialogCancelJoinEvent(
-      //               eventModel.id ?? "", eventModel.title ?? "");
-      //         },
-      //         style: ElevatedButton.styleFrom(
-      //             backgroundColor: MainColor.danger,
-      //             elevation: 0,
-      //             shape: RoundedRectangleBorder(
-      //                 borderRadius: BorderRadius.circular(16)),
-      //             padding:
-      //                 const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
-      //             maximumSize: const Size(200, 150)),
-      //         child: const Text(
-      //           "Cancel Join",
-      //           style: TextStyle(color: Colors.white, fontSize: 16),
-      //         ),
-      //       )
-      //     ],
-      //   ),
-      //   widgetBuilder: (context) => SizedBox(
-      //     width: 1.sw,
-      //     child: ElevatedButton(
-      //       onPressed: null,
-      //       style: ElevatedButton.styleFrom(
-      //           backgroundColor: MainColor.primary,
-      //           elevation: 0,
-      //           disabledBackgroundColor: MainColor.greyTextColor,
-      //           shape: RoundedRectangleBorder(
-      //               borderRadius: BorderRadius.circular(12)),
-      //           padding:
-      //               const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
-      //           maximumSize: const Size(200, 150)),
-      //       child: const Text(
-      //         "Attend Event",
-      //         style: TextStyle(color: Colors.white, fontSize: 16),
-      //       ),
-      //     ),
-      //   ),
-      // ),
+    );
+  }
+
+  Widget _modalBottomSheet(
+    BuildContext context,
+    EventData data,
+  ) {
+    return Container(
+      width: 1.sw,
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+      child: Column(
+        children: [
+          ListTile(
+            onTap: () {},
+            title: const Text("View Attendees"),
+          ),
+          ListTile(
+            onTap: () {},
+            title: const Text("Receive Attendees"),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -915,135 +1068,14 @@ class _LocationWidget extends StatelessWidget {
                   child: Obx(
                     () {
                       return eventController.userPosition.value.whenOrNull(
-                            loading: () => const Center(
-                              child: CircularProgressIndicator(),
+                            loading: () => CustomShimmerWidget.card(
+                              height: 0.25.sh,
+                              width: 1.sw,
                             ),
                             success: (position) {
-                              return GetBuilder<DetailMapController>(
-                                init: DetailMapController(),
-                                builder: (state) {
-                                  CameraPosition cameraPosition =
-                                      CameraPosition(
-                                    target: LatLng(
-                                      eventModel.latitude == null
-                                          ? position.latitude
-                                          : double.parse(
-                                              eventModel.latitude ?? "0.0"),
-                                      eventModel.longitude == null
-                                          ? position.longitude
-                                          : double.parse(
-                                              eventModel.longitude ?? "0.0"),
-                                    ),
-                                    zoom: 15,
-                                  );
-                                  state.setCameraPosition(
-                                    cameraPosition,
-                                  );
-                                  return Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      ClipRRect(
-                                        borderRadius: BorderRadius.circular(16),
-                                        child: SizedBox(
-                                          height: 0.25.sh,
-                                          child: GoogleMap(
-                                            mapType: MapType.normal,
-                                            initialCameraPosition:
-                                                cameraPosition,
-                                            onMapCreated: (controller) {
-                                              state.googleMapController =
-                                                  controller;
-                                            },
-                                            myLocationEnabled: true,
-                                            circles: {
-                                              Circle(
-                                                circleId: const CircleId(
-                                                    "eventLocation"),
-                                                center: LatLng(
-                                                  double.parse(
-                                                      eventModel.latitude ??
-                                                          "0.0"),
-                                                  double.parse(
-                                                      eventModel.longitude ??
-                                                          "0.0"),
-                                                ),
-                                                // radius: int to double
-                                                radius: eventModel.radius
-                                                        ?.toDouble() ??
-                                                    0.0,
-                                                fillColor: Colors.blue
-                                                    .withOpacity(0.1),
-                                                strokeColor: Colors.blue,
-                                                strokeWidth: 1,
-                                              ),
-                                            },
-                                            markers: {
-                                              Marker(
-                                                markerId: const MarkerId(
-                                                    "eventLocation"),
-                                                position: LatLng(
-                                                  double.parse(
-                                                      eventModel.latitude ??
-                                                          "0.0"),
-                                                  double.parse(
-                                                      eventModel.longitude ??
-                                                          "0.0"),
-                                                ),
-                                              ),
-                                            },
-                                          ),
-                                        ),
-                                      ),
-                                      const SizedBox(height: 16),
-                                      Text(
-                                        eventModel.location ?? "",
-                                        style: const TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                      const SizedBox(
-                                        height: 16,
-                                      ),
-                                      SizedBox(
-                                        width: 1.sw,
-                                        height: 50,
-                                        child: ElevatedButton(
-                                          onPressed: () {
-                                            state.goToExternalMap(
-                                              eventModel.latitude == null
-                                                  ? position.latitude
-                                                  : double.parse(
-                                                      eventModel.latitude ??
-                                                          "0.0"),
-                                              eventModel.longitude == null
-                                                  ? position.longitude
-                                                  : double.parse(
-                                                      eventModel.longitude ??
-                                                          "0.0"),
-                                              title: eventModel.title,
-                                            );
-                                          },
-                                          style: ElevatedButton.styleFrom(
-                                            backgroundColor: MainColor.primary,
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(16),
-                                            ),
-                                          ),
-                                          child: const Text(
-                                            "Show in Map",
-                                            style: TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 16,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  );
-                                },
+                              return MapWidget(
+                                eventModel: eventModel,
+                                position: position,
                               );
                             },
                             error: (message) => Center(

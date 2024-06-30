@@ -19,8 +19,10 @@ import 'package:path_provider/path_provider.dart';
 
 class FaceLivenessTakePictureController extends GetxController {
   static FaceLivenessTakePictureController get to => Get.find();
-  Rx<UIState> stateCamera = Rx<UIState>(UIState.loading);
-  Rx<UIState> stateLiveness = Rx<UIState>(UIState.loading);
+  Rx<UIStateFaceEnum> stateCamera =
+      Rx<UIStateFaceEnum>(UIStateFaceEnum.loading);
+  Rx<UIStateFaceEnum> stateLiveness =
+      Rx<UIStateFaceEnum>(UIStateFaceEnum.loading);
 
   /// * Variable
   int rightMotion = 0;
@@ -43,12 +45,10 @@ class FaceLivenessTakePictureController extends GetxController {
 
   Map<MotionTypeEnum, String> assetsPath = {
     MotionTypeEnum.blink: AssetConstant.emoticonEyeBlink,
-    MotionTypeEnum.openMouth: AssetConstant.emoticonOpenMouth,
     MotionTypeEnum.shakeHead: AssetConstant.emoticonShakeHead,
   };
   Map<MotionTypeEnum, String> wordings = {
     MotionTypeEnum.blink: 'Kedipkan Mata',
-    MotionTypeEnum.openMouth: 'Buka Mulut',
     MotionTypeEnum.shakeHead: 'Gelengkan Kepala',
   };
 
@@ -74,7 +74,7 @@ class FaceLivenessTakePictureController extends GetxController {
     }
     faceLivenessArgument = argument;
     onErrorLiveness = argument.onError;
-    var randomIndex = Random().nextInt(3);
+    var randomIndex = Random().nextInt(2);
     selectedMotion = MotionTypeEnum.values[randomIndex];
     _faceDetector = FaceDetector(
       options: FaceDetectorOptions(
@@ -95,8 +95,8 @@ class FaceLivenessTakePictureController extends GetxController {
   }
 
   void initCamera() async {
-    stateCamera.value = UIState.loading;
-    stateLiveness.value = UIState.loading;
+    stateCamera.value = UIStateFaceEnum.loading;
+    stateLiveness.value = UIStateFaceEnum.loading;
 
     var cameras = await availableCameras();
     var frontCamera = cameras
@@ -117,7 +117,7 @@ class FaceLivenessTakePictureController extends GetxController {
     if (scaleCamera < 1) scaleCamera = 1 / scaleCamera;
 
     await Future.delayed(const Duration(seconds: 3));
-    stateCamera.value = UIState.success;
+    stateCamera.value = UIStateFaceEnum.success;
     await cameraController.startImageStream(
       (image) async {
         if (isOnDetectionFace) return;
@@ -141,7 +141,7 @@ class FaceLivenessTakePictureController extends GetxController {
                 'Wajah yang terdeteksi terlalu banyak, silakan coba lagi',
           );
           selectedMotion = MotionTypeEnum.values[Random().nextInt(3)];
-          stateLiveness.value = UIState.idle;
+          stateLiveness.value = UIStateFaceEnum.idle;
           update(['animation']);
 
           return;
@@ -155,7 +155,7 @@ class FaceLivenessTakePictureController extends GetxController {
             description: 'Pastikan wajah Anda berada di dalam bingkai',
           );
           selectedMotion = MotionTypeEnum.values[Random().nextInt(3)];
-          stateLiveness.value = UIState.idle;
+          stateLiveness.value = UIStateFaceEnum.idle;
           update(['animation']);
           return;
         }
@@ -164,7 +164,7 @@ class FaceLivenessTakePictureController extends GetxController {
         rightMotion++;
         dev.log(rightMotion.toString(), name: 'right-motion');
         if (rightMotion < 1) return;
-        stateLiveness.value = UIState.success;
+        stateLiveness.value = UIStateFaceEnum.success;
         Future.delayed(const Duration(milliseconds: 2000), () {
           onTapTakePicture();
         });
@@ -254,23 +254,6 @@ class FaceLivenessTakePictureController extends GetxController {
       if ((face.leftEyeOpenProbability ?? 0) > 0.1) return false;
       if ((face.rightEyeOpenProbability ?? 0) > 0.1) return false;
       return true;
-    } else if (selectedMotion == MotionTypeEnum.openMouth) {
-      List<Point<int>>? upperLipBottom =
-          face.contours[FaceContourType.upperLipBottom]?.points;
-      List<Point<int>>? lowerLipTop =
-          face.contours[FaceContourType.lowerLipTop]?.points;
-
-      if (upperLipBottom == null) return false;
-      if (lowerLipTop == null) return false;
-
-      int? resultHighestY = _highestY(upperLipBottom)?.y;
-      int? resultLowestY = _lowestY(lowerLipTop)?.y;
-      if (resultHighestY == null) return false;
-      if (resultLowestY == null) return false;
-
-      bool openMouthProbablity = (resultHighestY - resultLowestY) < -10;
-
-      return openMouthProbablity;
     } else {
       var headEulerAngleY = face.headEulerAngleY ?? 0;
       if (headEulerAngleY > 20) return true;
@@ -278,30 +261,6 @@ class FaceLivenessTakePictureController extends GetxController {
 
       return false;
     }
-  }
-
-  Point<int>? _highestY(List<Point<int>> points) {
-    Point<int>? max;
-    for (var element in points) {
-      if (max == null) {
-        max = element;
-      } else if (max.y < element.y) {
-        max = element;
-      }
-    }
-    return max;
-  }
-
-  Point<int>? _lowestY(List<Point<int>> points) {
-    Point<int>? min;
-    for (var element in points) {
-      if (min == null) {
-        min = element;
-      } else if (min.y > element.y) {
-        min = element;
-      }
-    }
-    return min;
   }
 }
 

@@ -3,6 +3,7 @@ import 'package:guest_allow/configs/routes/main_route.dart';
 import 'package:guest_allow/modules/features/auth/modules/sign_in/controllers/sign_in.controller.dart';
 import 'package:guest_allow/modules/features/event/ui/attend_event_view.dart';
 import 'package:guest_allow/modules/features/event/ui/create_event_view.dart';
+import 'package:guest_allow/modules/features/event/ui/receive_attendees_view.dart';
 import 'package:guest_allow/modules/features/event/ui/select_users_view.dart';
 import 'package:guest_allow/modules/features/event/ui/show_all_event_view.dart';
 import 'package:guest_allow/modules/features/face_liveness/view/ui/face_liveness_confirmation_screen.dart';
@@ -90,6 +91,11 @@ abstract class MainPage {
     GetPage(
       name: MainRoute.attendEvent,
       page: () => const AttendEventView(),
+    ),
+
+    GetPage(
+      name: MainRoute.receiveAttendees,
+      page: () => const ReceiveAttendeesView(),
     ),
   ];
 }

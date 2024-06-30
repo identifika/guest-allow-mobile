@@ -41,10 +41,10 @@ class FaceLivenessTakePictureScreen extends StatelessWidget {
           context: context,
           valueBuilder: (context) => controller.stateCamera.value,
           caseBuilders: {
-            UIState.loading: (context) => const Center(
+            UIStateFaceEnum.loading: (context) => const Center(
                   child: CircularProgressIndicator(),
                 ),
-            UIState.success: (context) => _buildCamera(context),
+            UIStateFaceEnum.success: (context) => _buildCamera(context),
           },
           fallbackBuilder: (context) => const SizedBox(),
         ),
@@ -73,7 +73,7 @@ class FaceLivenessTakePictureScreen extends StatelessWidget {
               context: context,
               valueBuilder: (context) => controller.stateLiveness.value,
               caseBuilders: {
-                UIState.success: (context) => Padding(
+                UIStateFaceEnum.success: (context) => Padding(
                       padding: EdgeInsets.only(bottom: 30.h),
                       child: GestureDetector(
                         onTap: controller.onTapTakePicture,

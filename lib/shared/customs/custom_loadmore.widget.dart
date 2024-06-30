@@ -44,10 +44,10 @@ class CustomLoadMore extends StatefulWidget {
   });
 
   @override
-  _CustomLoadMoreState createState() => _CustomLoadMoreState();
+  CustomLoadMoreState createState() => CustomLoadMoreState();
 }
 
-class _CustomLoadMoreState extends State<CustomLoadMore> {
+class CustomLoadMoreState extends State<CustomLoadMore> {
   Widget get child => widget.child;
 
   LoadMoreDelegate get loadMoreDelegate =>

@@ -25,4 +25,5 @@ abstract class MainRoute {
   static const String faceLivenessGuide = '/face-liveness/guide';
 
   static const String attendEvent = '/attend-event';
+  static const String receiveAttendees = '/receive-attendees';
 }

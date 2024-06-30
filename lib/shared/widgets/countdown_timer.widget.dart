@@ -31,7 +31,7 @@ class _CountDownTimerState extends State<CountDownTimer>
     Duration duration = _controller.duration! * _controller.value;
     return widget.countDownFormatter != null
         ? widget.countDownFormatter!(duration.inSeconds)
-        : formatHHMMSS(duration.inSeconds);
+        : formatDDHHMMSS(duration.inSeconds);
     // In case user doesn't provide formatter use the default one
     // for that create a method which will be called formatHHMMSS or whatever you like
   }
@@ -99,13 +99,11 @@ class _CountDownTimerState extends State<CountDownTimer>
     );
   }
 
-  String formatHHMMSS(int seconds) {
-    // Implement your default formatter here
-    int hours = seconds ~/ 3600;
+  String formatDDHHMMSS(int seconds) {
+    int days = seconds ~/ (24 * 3600);
+    int hours = (seconds % (24 * 3600)) ~/ 3600;
     int minutes = (seconds % 3600) ~/ 60;
     int remainingSeconds = seconds % 60;
-    return [hours, minutes, remainingSeconds]
-        .map((seg) => seg.toString().padLeft(2, '0'))
-        .join(':');
+    return '${days > 0 ? '${days.toString().padLeft(2, '0')}d ' : ''}${hours.toString().padLeft(2, '0')}:${minutes.toString().padLeft(2, '0')}:${remainingSeconds.toString().padLeft(2, '0')}';
   }
 }

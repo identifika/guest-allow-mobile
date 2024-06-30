@@ -4,14 +4,12 @@ import 'package:get/get.dart';
 import 'package:guest_allow/configs/routes/main_route.dart';
 import 'package:guest_allow/configs/themes/main_color.dart';
 import 'package:guest_allow/constants/commons/asset_constant.dart';
-import 'package:guest_allow/modules/features/home/responses/get_popular_event.response.dart';
 import 'package:guest_allow/modules/features/main/models/event_model.dart';
 import 'package:guest_allow/modules/features/profile/controllers/profile.controller.dart';
 import 'package:guest_allow/shared/customs/custom_loadmore.widget.dart';
 import 'package:guest_allow/shared/widgets/card_this_month_event.dart';
 import 'package:guest_allow/shared/widgets/custom_shimmer_widget.dart';
 import 'package:guest_allow/shared/widgets/general_empty_error.widget.dart';
-import 'package:guest_allow/utils/extensions/date.extension.dart';
 
 class ProfileView extends StatelessWidget {
   const ProfileView({super.key});
@@ -670,87 +668,6 @@ class ProfileView extends StatelessWidget {
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _ProfileCardWidget extends StatelessWidget {
-  const _ProfileCardWidget({
-    required this.event,
-  });
-
-  final EventData event;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: EdgeInsets.only(bottom: 16.h),
-      child: Row(
-        children: [
-          SizedBox(
-            width: 72.w,
-            height: 72.w,
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(8.r),
-              child: Image.network(
-                event.photo ?? '',
-                fit: BoxFit.cover,
-                loadingBuilder: (context, child, loadingProgress) =>
-                    loadingProgress == null
-                        ? child
-                        : const CustomShimmerWidget.card(
-                            width: 64,
-                            height: 64,
-                          ),
-                errorBuilder: (context, error, stackTrace) => const Icon(
-                  Icons.error,
-                  color: Colors.red,
-                ),
-              ),
-            ),
-          ),
-          SizedBox(
-            width: 16.w,
-          ),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  event.title ?? '',
-                  style: TextStyle(
-                    fontSize: 16.sp,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                SizedBox(
-                  height: 8.h,
-                ),
-                Text(
-                  (DateTime.tryParse(event.startDate ?? '') ?? DateTime.now())
-                      .toDayMonth(),
-                  style: TextStyle(
-                    fontSize: 12.sp,
-                    color: MainColor.blackTextColor,
-                    fontWeight: FontWeight.w400,
-                  ),
-                ),
-                SizedBox(
-                  height: 8.h,
-                ),
-                Text(
-                  event.location ?? '',
-                  style: TextStyle(
-                    fontSize: 12.sp,
-                    color: MainColor.blackTextColor,
-                    fontWeight: FontWeight.w400,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
       ),
     );
   }

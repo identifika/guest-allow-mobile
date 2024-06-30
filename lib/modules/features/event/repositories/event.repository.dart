@@ -33,7 +33,7 @@ class EventRepository {
     } catch (e) {
       return EventDetailResponse(
         statusCode: 0,
-        message: 'Terjadi kesalahan',
+        message: 'Something went wrong',
       );
     }
   }
@@ -57,7 +57,7 @@ class EventRepository {
     } catch (e) {
       return GeneralResponseModel(
         statusCode: 0,
-        message: 'Terjadi kesalahan',
+        message: 'Something went wrong',
       );
     }
   }
@@ -81,7 +81,7 @@ class EventRepository {
     } catch (e) {
       return GeneralResponseModel(
         statusCode: 0,
-        message: 'Terjadi kesalahan',
+        message: 'Something went wrong',
       );
     }
   }
@@ -123,7 +123,7 @@ class EventRepository {
     } catch (e) {
       return GetPopularEventsResponse(
         statusCode: 0,
-        message: 'Terjadi kesalahan',
+        message: 'Something went wrong',
       );
     }
   }
@@ -156,7 +156,7 @@ class EventRepository {
     } catch (e) {
       return GetRegisteredUsersResponse(
         statusCode: 0,
-        message: 'Terjadi kesalahan',
+        message: 'Something went wrong',
       );
     }
   }
@@ -194,7 +194,7 @@ class EventRepository {
     } catch (e) {
       return CreateEventResponse(
         statusCode: 0,
-        message: 'Terjadi kesalahan',
+        message: 'Something went wrong',
       );
     }
   }
@@ -263,7 +263,46 @@ class EventRepository {
     } catch (e) {
       return EachDateTotalEventResponse(
         statusCode: 0,
-        message: 'Terjadi kesalahan',
+        message: 'Something went wrong',
+      );
+    }
+  }
+
+  Future<GeneralResponseModel> attendEvent({
+    required String id,
+    required Map<String, dynamic> data,
+    File? image,
+  }) async {
+    try {
+      var newData = data;
+      if (image != null) {
+        newData['photo'] = await MultipartFile.fromFile(
+          image.path,
+          filename: image.path.split('/').last,
+        );
+      }
+
+      FormData formData = FormData.fromMap(newData);
+
+      var response = await ApiServices.call().post(
+        EndpointConstant.attendEvent(id),
+        data: formData,
+      );
+
+      return GeneralResponseModel.fromJson(response.data);
+    } on DioException catch (dioError) {
+      try {
+        return GeneralResponseModel.fromJson(dioError.response?.data);
+      } catch (e) {
+        return GeneralResponseModel(
+          statusCode: dioError.response?.statusCode ?? 400,
+          message: DioErrorHelper.fromDioError(dioError),
+        );
+      }
+    } catch (e) {
+      return GeneralResponseModel(
+        statusCode: 0,
+        message: 'Something went wrong',
       );
     }
   }

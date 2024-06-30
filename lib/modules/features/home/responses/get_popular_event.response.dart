@@ -169,6 +169,7 @@ class EventData {
   bool? participantsExists;
   bool? receptionistsExists;
   UserModel? createdBy;
+  MyArrival? myArrival;
   List<UserModel>? participants;
   List<UserModel>? receptionists;
 
@@ -197,6 +198,7 @@ class EventData {
     this.participantsExists,
     this.receptionistsExists,
     this.createdBy,
+    this.myArrival,
     this.participants,
     this.receptionists,
   });
@@ -233,6 +235,9 @@ class EventData {
         createdBy: json["created_by"] == null
             ? null
             : UserModel.fromJson(json["created_by"]),
+        myArrival: json["my_arrival"] == null
+            ? null
+            : MyArrival.fromJson(json["my_arrival"]),
         participants: json["participants"] == null
             ? []
             : List<UserModel>.from(
@@ -268,6 +273,7 @@ class EventData {
         "participants_exists": participantsExists,
         "receptionists_exists": receptionistsExists,
         "created_by": createdBy?.toJson(),
+        "my_arrival": myArrival?.toJson(),
         "participants": participants == null
             ? []
             : List<dynamic>.from(participants!.map((x) => x.toJson())),
@@ -302,5 +308,100 @@ class Link {
         "url": url,
         "label": label,
         "active": active,
+      };
+}
+
+class MyArrival {
+  String? id;
+  String? eventId;
+  String? userId;
+  String? arrivedAt;
+  int? isUserConfirming;
+  String? latitude;
+  String? longitude;
+  String? location;
+  String? photo;
+  String? timeZone;
+  String? receptionistId;
+  String? createdAt;
+  String? updatedAt;
+
+  MyArrival({
+    this.id,
+    this.eventId,
+    this.userId,
+    this.arrivedAt,
+    this.isUserConfirming,
+    this.latitude,
+    this.longitude,
+    this.location,
+    this.photo,
+    this.timeZone,
+    this.receptionistId,
+    this.createdAt,
+    this.updatedAt,
+  });
+
+  MyArrival copyWith({
+    String? id,
+    String? eventId,
+    String? userId,
+    String? arrivedAt,
+    int? isUserConfirming,
+    String? latitude,
+    String? longitude,
+    String? location,
+    String? photo,
+    String? timeZone,
+    String? receptionistId,
+    String? createdAt,
+    String? updatedAt,
+  }) =>
+      MyArrival(
+        id: id ?? this.id,
+        eventId: eventId ?? this.eventId,
+        userId: userId ?? this.userId,
+        arrivedAt: arrivedAt ?? this.arrivedAt,
+        isUserConfirming: isUserConfirming ?? this.isUserConfirming,
+        latitude: latitude ?? this.latitude,
+        longitude: longitude ?? this.longitude,
+        location: location ?? this.location,
+        photo: photo ?? this.photo,
+        timeZone: timeZone ?? this.timeZone,
+        receptionistId: receptionistId ?? this.receptionistId,
+        createdAt: createdAt ?? this.createdAt,
+        updatedAt: updatedAt ?? this.updatedAt,
+      );
+
+  factory MyArrival.fromJson(Map<String, dynamic> json) => MyArrival(
+        id: json["id"],
+        eventId: json["event_id"],
+        userId: json["user_id"],
+        arrivedAt: json["arrived_at"],
+        isUserConfirming: json["is_user_confirming"],
+        latitude: json["latitude"],
+        longitude: json["longitude"],
+        location: json["location"],
+        photo: json["photo"],
+        timeZone: json["time_zone"],
+        receptionistId: json["receptionist_id"],
+        createdAt: json["created_at"],
+        updatedAt: json["updated_at"],
+      );
+
+  Map<String, dynamic> toJson() => {
+        "id": id,
+        "event_id": eventId,
+        "user_id": userId,
+        "arrived_at": arrivedAt,
+        "is_user_confirming": isUserConfirming,
+        "latitude": latitude,
+        "longitude": longitude,
+        "location": location,
+        "photo": photo,
+        "time_zone": timeZone,
+        "receptionist_id": receptionistId,
+        "created_at": createdAt,
+        "updated_at": updatedAt,
       };
 }

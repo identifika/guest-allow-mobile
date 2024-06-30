@@ -46,79 +46,58 @@ class CardThisMonthEvent extends StatelessWidget {
                     fontSize: 14,
                   ),
                 ),
-                const SizedBox(height: 4),
-                Conditional.single(
+                ...Conditional.list(
                   context: context,
                   conditionBuilder: (BuildContext context) =>
-                      !(eventModel.isOnline),
-                  widgetBuilder: (context) => Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Padding(
-                        padding: EdgeInsets.only(top: 3),
-                        child: Icon(
-                          Icons.location_on_outlined,
-                          size: 14,
-                          color: MainColor.greyTextColor,
-                        ),
+                      eventModel.totalParticipant != null &&
+                      eventModel.totalParticipant! > 0 &&
+                      eventModel.participants != null,
+                  widgetBuilder: (context) => <Widget>[
+                    const SizedBox(height: 4),
+                    _locationWidget(context)
+                  ],
+                  fallbackBuilder: (context) => [
+                    const SizedBox(height: 4),
+                    Text(
+                      eventModel.description,
+                      maxLines: 2,
+                      textHeightBehavior: const TextHeightBehavior(
+                        applyHeightToFirstAscent: true,
                       ),
-                      const SizedBox(width: 4),
-                      Expanded(
-                        child: Text(
-                          eventModel.location,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: MainColor.greyTextColor,
-                          ),
-                        ),
-                      )
-                    ],
-                  ),
-                  fallbackBuilder: (context) => const Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Padding(
-                        padding: EdgeInsets.only(top: 3),
-                        child: Icon(
-                          Icons.videocam_outlined,
-                          color: MainColor.greyTextColor,
-                          size: 14,
-                        ),
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: MainColor.greyTextColor,
                       ),
-                      SizedBox(width: 4),
-                      Expanded(
-                        child: Text(
-                          "Online",
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: MainColor.greyTextColor,
-                          ),
-                        ),
-                      )
-                    ],
-                  ),
-                ),
-                if (eventModel.totalParticipant != null &&
-                    eventModel.totalParticipant! > 0 &&
-                    eventModel.participants != null) ...[
-                  const SizedBox(height: 4),
-                  Expanded(
-                    child: StackParticipant(
-                      width: 18,
-                      height: 18,
-                      fontSize: 10,
-                      positionText: (eventModel.totalParticipant ?? 0) > 5
-                          ? 95
-                          : ((eventModel.totalParticipant ?? 0) * 12.0) + 12,
-                      createdBy: eventModel.participants,
-                      totalParticipant: eventModel.totalParticipant,
                     ),
-                  ),
-                ]
+                  ],
+                ),
+                ...Conditional.list(
+                  context: context,
+                  conditionBuilder: (BuildContext context) =>
+                      eventModel.totalParticipant != null &&
+                      eventModel.totalParticipant! > 0 &&
+                      eventModel.participants != null,
+                  widgetBuilder: (context) => <Widget>[
+                    const SizedBox(height: 4),
+                    Expanded(
+                      child: StackParticipant(
+                        width: 18,
+                        height: 18,
+                        fontSize: 10,
+                        positionText: (eventModel.totalParticipant ?? 0) > 5
+                            ? 95
+                            : ((eventModel.totalParticipant ?? 0) * 12.0) + 12,
+                        createdBy: eventModel.participants,
+                        totalParticipant: eventModel.totalParticipant,
+                      ),
+                    ),
+                  ],
+                  fallbackBuilder: (context) => [
+                    const SizedBox(height: 4),
+                    _locationWidget(context),
+                  ],
+                ),
               ],
             ),
           ),
@@ -155,6 +134,55 @@ class CardThisMonthEvent extends StatelessWidget {
               ],
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _locationWidget(BuildContext context) {
+    return Conditional.single(
+      context: context,
+      conditionBuilder: (BuildContext context) => !(eventModel.isOnline),
+      widgetBuilder: (context) => Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          const Icon(
+            Icons.location_on_outlined,
+            size: 14,
+            color: MainColor.greyTextColor,
+          ),
+          const SizedBox(width: 4),
+          Expanded(
+            child: Text(
+              eventModel.location,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontSize: 12,
+                color: MainColor.greyTextColor,
+              ),
+            ),
+          )
+        ],
+      ),
+      fallbackBuilder: (context) => const Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.videocam_outlined,
+            color: MainColor.greyTextColor,
+            size: 14,
+          ),
+          SizedBox(width: 4),
+          Expanded(
+            child: Text(
+              "Online",
+              style: TextStyle(
+                fontSize: 12,
+                color: MainColor.greyTextColor,
+              ),
+            ),
+          )
         ],
       ),
     );

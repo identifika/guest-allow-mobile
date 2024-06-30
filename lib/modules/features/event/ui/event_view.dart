@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -7,13 +5,10 @@ import 'package:guest_allow/configs/routes/main_route.dart';
 import 'package:guest_allow/configs/themes/main_color.dart';
 import 'package:guest_allow/constants/commons/asset_constant.dart';
 import 'package:guest_allow/modules/features/event/controllers/event.controller.dart';
-import 'package:guest_allow/modules/features/home/responses/get_popular_event.response.dart';
 import 'package:guest_allow/modules/features/main/models/event_model.dart';
-import 'package:guest_allow/modules/features/search/ui/components/search_ticket_card.dart';
 import 'package:guest_allow/shared/widgets/card_this_month_event.dart';
 import 'package:guest_allow/shared/widgets/custom_shimmer_widget.dart';
 import 'package:guest_allow/shared/widgets/general_empty_error.widget.dart';
-import 'package:guest_allow/utils/extensions/date.extension.dart';
 import 'package:table_calendar/table_calendar.dart';
 
 class EventView extends StatelessWidget {

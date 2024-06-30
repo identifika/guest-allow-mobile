@@ -7,7 +7,6 @@ import 'package:guest_allow/modules/features/main/models/event_model.dart';
 import 'package:guest_allow/modules/global_controllers/maps.controller.dart';
 import 'package:guest_allow/utils/db/user_collection.db.dart';
 import 'package:guest_allow/utils/enums/api_status.enum.dart';
-import 'package:guest_allow/utils/extensions/date.extension.dart';
 import 'package:guest_allow/utils/helpers/api_status.helper.dart';
 import 'package:guest_allow/utils/services/local_db.service.dart';
 import 'package:guest_allow/utils/states/ui_state_model/ui_state_model.dart';

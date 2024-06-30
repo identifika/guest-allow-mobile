@@ -1,6 +1,5 @@
 enum MotionTypeEnum {
   blink,
-  openMouth,
   shakeHead,
 }
 
@@ -9,8 +8,6 @@ extension MotionTypeEnumExtension on MotionTypeEnum {
     switch (this) {
       case MotionTypeEnum.blink:
         return 'Blink';
-      case MotionTypeEnum.openMouth:
-        return 'Open Mouth';
       case MotionTypeEnum.shakeHead:
         return 'Shake Head';
       default:

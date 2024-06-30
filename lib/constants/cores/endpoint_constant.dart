@@ -1,7 +1,7 @@
 class EndpointConstant {
   EndpointConstant._();
 
-  static const String baseUrl = "http://172.20.10.3:8000/api";
+  static const String baseUrl = "http://192.168.0.112:8000/api";
 
   static const String login = "/auth/login";
   static const String register = "/auth/register";
@@ -12,6 +12,7 @@ class EndpointConstant {
   static String eventDetail(String id) => "/events/$id";
   static String joinEvent(String id) => "/events/$id/join";
   static String leaveEvent(String id) => "/events/$id/leave";
+  static String attendEvent(String id) => "/events/$id/check-in";
 
   static const String getRegisteredUsers = "/users/all";
   static const String getMyEvents = "/users/my-events";

@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
@@ -23,6 +21,7 @@ enum EventDetailType {
   owner,
   participant,
   receptionist,
+  guest,
 }
 
 // read event detail type
@@ -36,6 +35,8 @@ extension EventDetailTypeExtension on EventDetailType {
         return 'participant';
       case EventDetailType.receptionist:
         return 'receptionist';
+      case EventDetailType.guest:
+        return 'guest';
       default:
         return '';
     }
@@ -80,7 +81,7 @@ class DetailEventController extends GetxController {
   DetailMapController detailMapController = Get.put(DetailMapController());
 
   late UserLocalData? userLocalData;
-  late EventDetailType eventDetailType;
+  EventDetailType eventDetailType = EventDetailType.guest;
   late EventStatus eventStatus;
   var currentTime = DateTime.now();
 
@@ -119,13 +120,6 @@ class DetailEventController extends GetxController {
     } else {
       eventStatus = EventStatus.finished;
     }
-
-    log('Current Time: ${currentTime.toString()}');
-    log('Start Time: ${startTime.toString()}');
-    log('End Time: ${endTime.toString()}');
-    log('Time Zone: ${response.data?.timeZone}');
-    log('current time zone: ${tz.local}');
-    log('Event Status: ${eventStatus.read}');
   }
 
   void _setUserToEventState(EventDetailResponse response) {
@@ -135,9 +129,9 @@ class DetailEventController extends GetxController {
       eventDetailType = EventDetailType.participant;
     } else if (response.data?.receptionistsExists ?? false) {
       eventDetailType = EventDetailType.receptionist;
+    } else {
+      eventDetailType = EventDetailType.guest;
     }
-
-    log('Event Detail Type: ${eventDetailType.read}');
   }
 
   Future<void> joinEvent(String id) async {

@@ -1,4 +1,4 @@
-enum UIState {
+enum UIStateFaceEnum {
   idle,
   loading,
   success,
