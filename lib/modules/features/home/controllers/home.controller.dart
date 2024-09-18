@@ -1,10 +1,11 @@
-import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
 import 'package:guest_allow/modules/features/home/repositories/home.repository.dart';
 import 'package:guest_allow/modules/features/home/responses/get_popular_event.response.dart';
 import 'package:guest_allow/modules/features/main/models/event_model.dart';
 import 'package:guest_allow/modules/global_controllers/maps.controller.dart';
+import 'package:guest_allow/modules/global_models/responses/nominatim_maps/find_place.response.dart';
+import 'package:guest_allow/modules/global_repositories/maps.repository.dart';
 import 'package:guest_allow/utils/db/user_collection.db.dart';
 import 'package:guest_allow/utils/enums/api_status.enum.dart';
 import 'package:guest_allow/utils/helpers/api_status.helper.dart';
@@ -14,6 +15,7 @@ import 'package:guest_allow/utils/states/ui_state_model/ui_state_model.dart';
 class HomeController extends GetxController {
   static HomeController get to => Get.find();
   final HomeRepository _homeRepository = HomeRepository();
+  final MapsRepository _mapsRepository = MapsRepository();
 
   DateTime selectedDate = DateTime.now();
   late MapsController mapsController;
@@ -22,7 +24,8 @@ class HomeController extends GetxController {
       const UIState<List<EventModel>>.idle().obs;
   Rx<UIState<List<EventModel>>> thisMonthEventState =
       const UIState<List<EventModel>>.idle().obs;
-  Rx<UIState<Placemark>> placeMarkState = const UIState<Placemark>.idle().obs;
+  Rx<UIState<PlaceFeature>> placeMarkState =
+      const UIState<PlaceFeature>.idle().obs;
 
   Position? userPosition;
   Rx<UIState<UserLocalData>> userState =
@@ -30,11 +33,20 @@ class HomeController extends GetxController {
 
   Future<void> getPopularEvent() async {
     popularEventState.value = const UIState<List<EventModel>>.loading();
+    var datenow = DateTime.now();
+
     GetPopularEventsResponse response = await _homeRepository.getPopularEvent(
       page: 1,
       limit: 5,
       userPosition: userPosition,
-      startDate: DateTime.now(),
+      startDate: DateTime(
+        datenow.year,
+        datenow.month,
+        datenow.day,
+        0,
+        0,
+        0,
+      ),
     );
     if (ApiStatusHelper.getApiStatus(response.statusCode ?? 0) ==
         ApiStatusEnum.success) {
@@ -116,13 +128,26 @@ class HomeController extends GetxController {
   }
 
   Future<void> getPlaceMark() async {
-    placeMarkState.value = const UIState<Placemark>.loading();
     try {
-      List<Placemark> placeMark = await placemarkFromCoordinates(
-        userPosition!.latitude,
-        userPosition!.longitude,
+      placeMarkState.value = const UIState<PlaceFeature>.loading();
+
+      var response = await _mapsRepository.nominatimReverseGeocode(
+        latitude: userPosition?.latitude ?? 0,
+        longitude: userPosition?.longitude ?? 0,
       );
-      placeMarkState.value = UIState.success(data: placeMark.first);
+      if (ApiStatusHelper.isApiSuccess(response.statusCode)) {
+        if (((response.meta as NominatimFindPlaceResponse).features ?? [])
+            .isEmpty) {
+          placeMarkState.value =
+              const UIState.empty(message: "Can't get the current location");
+        } else {
+          placeMarkState.value = UIState.success(
+              data: (response.meta as NominatimFindPlaceResponse)
+                      .features
+                      ?.first ??
+                  PlaceFeature());
+        }
+      }
     } catch (e) {
       placeMarkState.value = UIState.error(message: e.toString());
     }

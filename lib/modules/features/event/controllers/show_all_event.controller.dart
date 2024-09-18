@@ -25,6 +25,7 @@ class ShowAllEventController extends GetxController {
 
   RxBool isSearching = false.obs;
   TextEditingController searchController = TextEditingController();
+  FocusNode searchFocus = FocusNode();
 
   Future<void> getPopularEvent({
     bool isLoadMore = false,

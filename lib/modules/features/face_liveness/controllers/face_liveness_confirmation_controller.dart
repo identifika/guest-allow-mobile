@@ -10,6 +10,9 @@ class FaceLivenessConfirmationController extends GetxController {
   late FaceLivenessTakePictureArgument faceLivenessArgument;
   late File resultImage;
 
+  List<String> listStep = [];
+  int curIndexStep = 2;
+
   @override
   void onInit() {
     var argument = Get.arguments;
@@ -30,6 +33,7 @@ class FaceLivenessConfirmationController extends GetxController {
     }
     faceLivenessArgument = argument.faceLivenessArgument;
     resultImage = argument.file;
+
     super.onInit();
   }
 

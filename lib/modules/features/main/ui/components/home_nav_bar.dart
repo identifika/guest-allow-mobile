@@ -26,31 +26,5 @@ class HomeNavbar extends StatelessWidget {
       items: destination,
       onTap: onTap,
     );
-
-    // return BottomAppBar(
-    //   color: Colors.white,
-    //   height: 70,
-    //   shape: const CircularNotchedRectangle(),
-    //   child: Row(
-    //     mainAxisAlignment: MainAxisAlignment.spaceAround,
-    //     children: destination.map((item) {
-    //       var index = destination.indexOf(item);
-    //       return InkWell(
-    //         onTap: () {
-    //           onTap(index);
-    //         },
-    //         child: Container(
-    //           padding: const EdgeInsets.symmetric(vertical: 8),
-    //           child: Column(
-    //             mainAxisSize: MainAxisSize.min,
-    //             children: [
-    //               item.icon,
-    //             ],
-    //           ),
-    //         ),
-    //       );
-    //     }).toList(),
-    //   ),
-    // );
   }
 }

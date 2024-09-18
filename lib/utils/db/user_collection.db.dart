@@ -4,7 +4,7 @@ part 'user_collection.db.g.dart';
 
 @collection
 class UserLocalData {
-  Id id = Isar.autoIncrement;
+  Id id;
   String? userId;
   String? token;
   String? name;
@@ -14,6 +14,7 @@ class UserLocalData {
   String? createdAt;
   String? updatedAt;
   String? faceIdentifier;
+  String? fcmToken;
 
   UserLocalData({
     this.id = Isar.autoIncrement,
@@ -26,5 +27,6 @@ class UserLocalData {
     this.createdAt,
     this.updatedAt,
     this.faceIdentifier,
+    this.fcmToken,
   });
 }

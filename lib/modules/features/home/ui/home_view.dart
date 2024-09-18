@@ -21,7 +21,11 @@ class HomeView extends StatelessWidget {
         onRefresh: () async {
           controller.getPopularEvent();
           controller.getThisMonthEvent();
+          controller.getPlaceMark();
+          controller.getUser();
         },
+        color: MainColor.primary,
+        backgroundColor: MainColor.white,
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.only(top: 24),
@@ -118,7 +122,8 @@ class HomeView extends StatelessWidget {
                       alignment: Alignment.topCenter,
                       child: GeneralEmptyErrorWidget(
                         titleText: message,
-                        descText: 'Maaf, tidak ada event yang tersedia',
+                        descText:
+                            'Sorry, there is no event data available right now',
                         isCentered: true,
                       ),
                     ),
@@ -207,7 +212,8 @@ class HomeView extends StatelessWidget {
                       alignment: Alignment.topCenter,
                       child: GeneralEmptyErrorWidget(
                         titleText: message,
-                        descText: 'Maaf, tidak ada event yang tersedia',
+                        descText:
+                            'Sorry, there is no event data available right now',
                         isCentered: true,
                       ),
                     ),
@@ -278,7 +284,7 @@ class HomeView extends StatelessWidget {
                             width: 4,
                           ),
                           Text(
-                            data.name ?? "",
+                            data.properties?.displayName ?? "",
                             style: TextStyle(
                                 fontWeight: FontWeight.w400,
                                 fontSize: 12.sp,
@@ -317,7 +323,9 @@ class HomeView extends StatelessWidget {
               children: [
                 GestureDetector(
                   onTap: () {
-                    MainController.to.changeIndex(2);
+                    Get.toNamed(
+                      MainRoute.notificationsView,
+                    );
                   },
                   child: Icon(
                     Icons.notifications_none_rounded,

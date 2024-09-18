@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:guest_allow/configs/themes/main_color.dart';
 
 /// return true is refresh success
 ///
@@ -451,7 +452,7 @@ class DefaultLoadMoreDelegate extends LoadMoreDelegate {
               width: _loadmoreIndicatorSize,
               height: _loadmoreIndicatorSize,
               child: CircularProgressIndicator(
-                backgroundColor: Colors.blue,
+                color: MainColor.primary,
               ),
             ),
             Padding(

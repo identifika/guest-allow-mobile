@@ -15,6 +15,7 @@ class EventModel {
     required this.description,
     required this.price,
     required this.isOnline,
+    required this.isImported,
     this.link,
     this.participants,
     this.totalParticipant,
@@ -28,6 +29,7 @@ class EventModel {
   String description;
   num price;
   bool isOnline;
+  bool isImported;
   String? link;
   List<UserModel>? participants;
   int? totalParticipant;
@@ -50,6 +52,8 @@ class EventModel {
             : List<UserModel>.from(
                 json["participants"].map((x) => UserModel.fromJson(x))),
         isOnline: json["is_online"] != null ? json['is_online'] == 0 : false,
+        isImported:
+            json["is_imported"] != null ? json['is_imported'] == 0 : false,
         link: json["link"],
         totalParticipant: json["total_participant"],
       );
@@ -59,7 +63,8 @@ class EventModel {
         title: data?.title ?? '',
         description: data?.description ?? '',
         image: data?.photo ?? '',
-        date: tz.TZDateTime.from(DateTime.parse(data?.startDate ?? ''),
+        date: tz.TZDateTime.from(
+                DateTime.tryParse(data?.startDate ?? '') ?? DateTime.now(),
                 tz.getLocation(data?.timeZone ?? ''))
             .toLocal()
             .toDayMonth(),
@@ -68,6 +73,7 @@ class EventModel {
         participants: data?.participants,
         totalParticipant: data?.participantsCount,
         isOnline: data?.type == 0,
+        isImported: data?.isImported == 1,
         link: data?.link,
       );
 
@@ -83,6 +89,7 @@ class EventModel {
             ? null
             : List<dynamic>.from(participants!.map((x) => x.toJson())),
         "is_online": isOnline ? 1 : 0,
+        "is_imported": isImported ? 1 : 0,
         "link": link,
         "total_participant": totalParticipant,
       };

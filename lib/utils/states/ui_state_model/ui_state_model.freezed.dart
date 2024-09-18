@@ -280,7 +280,7 @@ class __$$UIStateEmptyImplCopyWithImpl<T, $Res>
 /// @nodoc
 
 class _$UIStateEmptyImpl<T> extends UIStateEmpty<T> {
-  const _$UIStateEmptyImpl({this.message = 'Maaf, data masih kosong'})
+  const _$UIStateEmptyImpl({this.message = 'Sorry, data is still empty'})
       : super._();
 
   @override
@@ -557,7 +557,7 @@ class __$$UIStateErrorImplCopyWithImpl<T, $Res>
 
 class _$UIStateErrorImpl<T> extends UIStateError<T> {
   const _$UIStateErrorImpl(
-      {this.message = 'Upps ada masalah, silahkan tunggu beberapa saat lagi'})
+      {this.message = 'Oops, there is a problem, please wait a moment'})
       : super._();
 
   @override

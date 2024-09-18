@@ -3,12 +3,14 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:guest_allow/configs/themes/main_color.dart';
 import 'package:guest_allow/constants/commons/asset_constant.dart';
+import 'package:guest_allow/modules/features/auth/modules/sign_up/controllers/sign_up.controller.dart';
 
 class SignUpView extends StatelessWidget {
   const SignUpView({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final controller = Get.put(SignUpController());
     return Scaffold(
       backgroundColor: MainColor.backgroundColor,
       resizeToAvoidBottomInset: true,
@@ -60,9 +62,13 @@ class SignUpView extends StatelessWidget {
                           height: 48.h,
                         ),
                         TextField(
+                          controller: controller.nameController,
                           keyboardType: TextInputType.name,
+                          onEditingComplete: () {
+                            FocusScope.of(context).nextFocus();
+                          },
                           decoration: InputDecoration(
-                            hintText: "Nama Lengkap",
+                            hintText: "Full Name",
                             hintStyle: const TextStyle(
                               color: MainColor.black,
                               fontSize: 16,
@@ -94,7 +100,11 @@ class SignUpView extends StatelessWidget {
                           height: 20.h,
                         ),
                         TextField(
+                          controller: controller.emailController,
                           keyboardType: TextInputType.emailAddress,
+                          onEditingComplete: () {
+                            FocusScope.of(context).nextFocus();
+                          },
                           decoration: InputDecoration(
                             hintText: "Email",
                             hintStyle: const TextStyle(
@@ -127,14 +137,22 @@ class SignUpView extends StatelessWidget {
                         SizedBox(
                           height: 20.h,
                         ),
-                        const CustomLoginTextField(
+                        CustomLoginTextField(
+                          controller: controller.passwordController,
                           hint: 'Password',
+                          onEditingComplete: () {
+                            FocusScope.of(context).nextFocus();
+                          },
                         ),
                         SizedBox(
                           height: 20.h,
                         ),
-                        const CustomLoginTextField(
+                        CustomLoginTextField(
+                          controller: controller.confirmPasswordController,
                           hint: 'Confirm Password',
+                          onEditingComplete: () {
+                            FocusScope.of(context).unfocus();
+                          },
                         ),
                         SizedBox(
                           height: 20.h,
@@ -142,20 +160,26 @@ class SignUpView extends StatelessWidget {
                         SizedBox(
                           width: 1.sw,
                           height: 56.h,
-                          child: ElevatedButton(
-                            onPressed: () {},
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: MainColor.primary,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
+                          child: Obx(
+                            () => ElevatedButton(
+                              onPressed: controller.isFormValid.value
+                                  ? () {
+                                      controller.signUp();
+                                    }
+                                  : null,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: MainColor.primary,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
                               ),
-                            ),
-                            child: const Text(
-                              "Sign Up",
-                              style: TextStyle(
-                                color: MainColor.white,
-                                fontSize: 16,
-                                fontWeight: FontWeight.w700,
+                              child: const Text(
+                                "Sign Up",
+                                style: TextStyle(
+                                  color: MainColor.white,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w700,
+                                ),
                               ),
                             ),
                           ),
@@ -203,10 +227,18 @@ class SignUpView extends StatelessWidget {
 }
 
 class CustomLoginTextField extends StatefulWidget {
-  const CustomLoginTextField({super.key, this.hint, this.controller});
+  const CustomLoginTextField({
+    super.key,
+    this.hint,
+    this.controller,
+    this.onEditingComplete,
+    this.onSubmitted,
+  });
 
   final String? hint;
   final TextEditingController? controller;
+  final Function()? onEditingComplete;
+  final Function()? onSubmitted;
 
   @override
   State<CustomLoginTextField> createState() => _CustomLoginTextFieldState();
@@ -221,6 +253,16 @@ class _CustomLoginTextFieldState extends State<CustomLoginTextField> {
       obscureText: _isObscure,
       keyboardType: TextInputType.visiblePassword,
       controller: widget.controller,
+      onEditingComplete: () {
+        if (widget.onEditingComplete != null) {
+          widget.onEditingComplete!();
+        }
+      },
+      onSubmitted: (value) {
+        if (widget.onSubmitted != null) {
+          widget.onSubmitted!();
+        }
+      },
       decoration: InputDecoration(
         hintText: widget.hint,
         hintStyle: const TextStyle(

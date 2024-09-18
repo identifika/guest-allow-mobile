@@ -202,9 +202,18 @@ class ProfileController extends GetxController
     );
   }
 
+  void showSuccessDialog(String description) {
+    CustomDialogWidget.showDialogSuccess(description: description, duration: 5);
+  }
+
+  void updateLocalData() {
+    user = LocalDbService.getUserLocalDataSync();
+    update(['profile-view']);
+  }
+
   @override
   void onInit() {
-    user = LocalDbService.getUserLocalDataSync();
+    updateLocalData();
     getMyEvents();
     tabController = TabController(length: 3, vsync: this);
     super.onInit();

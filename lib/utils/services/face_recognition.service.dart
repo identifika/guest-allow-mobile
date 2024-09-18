@@ -6,7 +6,6 @@ import 'package:guest_allow/modules/features/face_liveness/view/argument/face_li
 import 'package:guest_allow/modules/features/face_liveness/view/argument/face_liveness_take_picture_argument.dart';
 import 'package:guest_allow/modules/global_repositories/face_recognition.repository.dart';
 import 'package:guest_allow/shared/widgets/custom_dialog.widget.dart';
-import 'package:guest_allow/utils/enums/api_status.enum.dart';
 import 'package:guest_allow/utils/helpers/api_status.helper.dart';
 import 'package:guest_allow/utils/services/face_detector.service.dart';
 import 'package:guest_allow/utils/services/local_db.service.dart';
@@ -46,11 +45,11 @@ class FaceRecognitionService {
       MainRoute.faceLivenessGuide,
       arguments: FaceLivenessGuideArgument(
         steps: [
-          'Foto E-KTP',
-          'Konfirmasi Data',
-          'Verifikasi Wajah',
+          'Take Picture',
+          'Data Confirmation',
+          'Face Verification',
         ],
-        curIndexSteps: 2,
+        curIndexSteps: 0,
         faceLivenessTakePictureArgument: FaceLivenessTakePictureArgument(
           onError: (error) {
             Map<String, String> errorDesc = {
@@ -87,26 +86,28 @@ class FaceRecognitionService {
 
       CustomDialogWidget.closeLoading();
 
-      if (ApiStatusHelper.getApiStatus(response.statusCode ?? 0) ==
-          ApiStatusEnum.success) {
+      if (ApiStatusHelper.isApiSuccess(response.statusCode)) {
         var user = await LocalDbService.getUserLocalData();
         user?.faceIdentifier = (response.meta ?? '') as String;
 
         await LocalDbService.setUserLocalData(user!);
 
-        CustomDialogWidget.showDialogSuccess(
-          title: 'Berhasil Mendaftarkan Wajah',
-          description: 'Wajah Anda berhasil terdaftar',
+        await CustomDialogWidget.showDialogSuccess(
+          title: 'Success to Register Face',
+          description: 'Your face is registered successfully',
+          duration: 5,
         );
+
+        Get.back();
       } else {
         CustomDialogWidget.showDialogProblem(
-          title: 'Gagal Mendaftarkan Wajah',
-          description: response.message ?? 'Terjadi kesalahan',
+          title: 'Failed to Register Face',
+          description: response.message ?? 'Please try again',
         );
       }
     } catch (e) {
       CustomDialogWidget.showDialogProblem(
-        title: 'Gagal Mendaftarkan Wajah',
+        title: 'Failed to Register Face',
         description: e.toString(),
       );
     }

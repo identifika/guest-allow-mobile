@@ -32,28 +32,29 @@ class MapsController extends GetxController {
 
     if (!serviceEnabled) {
       CustomDialogWidget.showDialogProblem(
-        title: 'Lokasi Tidak Aktif',
-        description: 'Silahkan aktifkan lokasi anda terlebih dahulu',
+        title: 'Your location service is disabled',
+        description: 'Please enable location service',
         buttonOnTap: () {
           Geolocator.openLocationSettings();
         },
-        textButton: 'Aktifkan Lokasi',
+        textButton: 'Enable Location',
       );
 
       return;
     }
 
-    permission = await Geolocator.requestPermission();
+    permission = await Geolocator.checkPermission();
 
     if (permission == LocationPermission.deniedForever ||
         permission == LocationPermission.denied) {
-      CustomDialogWidget.showDialogProblem(
-        title: 'Lokasi Tidak Aktif',
-        description: 'Silahkan aktifkan lokasi anda terlebih dahulu',
-        buttonOnTap: () {
-          Geolocator.openAppSettings();
+      await CustomDialogWidget.showDialogProblem(
+        title: 'Location Permission Is Denied',
+        description: 'Please permit the location permission',
+        buttonOnTap: () async {
+          Get.back();
+          permission = await Geolocator.requestPermission();
         },
-        textButton: 'Aktifkan Lokasi',
+        textButton: 'Permit',
       );
 
       return;

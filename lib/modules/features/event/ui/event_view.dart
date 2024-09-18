@@ -1,14 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
-import 'package:guest_allow/configs/routes/main_route.dart';
 import 'package:guest_allow/configs/themes/main_color.dart';
-import 'package:guest_allow/constants/commons/asset_constant.dart';
 import 'package:guest_allow/modules/features/event/controllers/event.controller.dart';
-import 'package:guest_allow/modules/features/main/models/event_model.dart';
-import 'package:guest_allow/shared/widgets/card_this_month_event.dart';
 import 'package:guest_allow/shared/widgets/custom_shimmer_widget.dart';
-import 'package:guest_allow/shared/widgets/general_empty_error.widget.dart';
 import 'package:table_calendar/table_calendar.dart';
 
 class EventView extends StatelessWidget {
@@ -196,185 +191,16 @@ class EventView extends StatelessWidget {
                 },
               ),
             ),
-            SizedBox(
-              height: 16.sp,
-            ),
-            // Text my event
-            Container(
-              padding: const EdgeInsets.all(16),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    "My Next Event",
-                    style: TextStyle(
-                      color: MainColor.blackTextColor,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 16.sp,
-                    ),
-                  ),
-                  Text(
-                    "See all",
-                    style: TextStyle(
-                      color: MainColor.primary,
-                      fontWeight: FontWeight.w500,
-                      fontSize: 14.sp,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Obx(
-              () =>
-                  controller.userJoinedEventState.value.whenOrNull(
-                    loading: () => ListView.builder(
-                      itemCount: 1,
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemBuilder: (context, index) {
-                        return CustomShimmerWidget.card(
-                          height: 200.sp,
-                        );
-                      },
-                    ),
-                    empty: (message) => Container(
-                      width: 1.sw,
-                      alignment: Alignment.topCenter,
-                      child: GeneralEmptyErrorWidget(
-                        titleText: 'My Next Event',
-                        descText: message,
-                      ),
-                    ),
-                    error: (message) => Container(
-                      width: 1.sw,
-                      alignment: Alignment.topCenter,
-                      child: GeneralEmptyErrorWidget(
-                        titleText: 'My Next Event',
-                        descText: message,
-                        customUrlImage: AssetConstant.drawError,
-                      ),
-                    ),
-                    success: (data) {
-                      return ListView.builder(
-                        itemCount: data.data?.length ?? 0,
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        itemBuilder: (context, index) {
-                          var eventdata = data.data?[index].event;
-                          final eventModel = EventModel.fromEventData(
-                            eventdata,
-                          );
-                          return Padding(
-                            padding: const EdgeInsets.all(8),
-                            child: GestureDetector(
-                              onTap: () {
-                                Get.toNamed(
-                                  MainRoute.detailEvent,
-                                  arguments: {
-                                    'eventData': eventModel.toJson(),
-                                  },
-                                );
-                              },
-                              child: CardThisMonthEvent(
-                                eventModel: eventModel,
-                              ),
-                            ),
-                          );
-                        },
-                      );
-                    },
-                  ) ??
-                  const SizedBox(),
-            ),
-            // List my event
-            SizedBox(
-              height: 16.sp,
-            ),
-            Container(
-              padding: const EdgeInsets.all(16),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    "As Receptionist",
-                    style: TextStyle(
-                      color: MainColor.blackTextColor,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 16.sp,
-                    ),
-                  ),
-                  Text(
-                    "See all",
-                    style: TextStyle(
-                      color: MainColor.primary,
-                      fontWeight: FontWeight.w500,
-                      fontSize: 14.sp,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Obx(
-              () =>
-                  controller.userAsReceptionistState.value.whenOrNull(
-                    loading: () => ListView.builder(
-                      itemCount: 1,
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemBuilder: (context, index) {
-                        return CustomShimmerWidget.card(
-                          height: 200.sp,
-                        );
-                      },
-                    ),
-                    empty: (message) => Container(
-                      width: 1.sw,
-                      alignment: Alignment.topCenter,
-                      child: GeneralEmptyErrorWidget(
-                        titleText: 'As Receptionist',
-                        descText: message,
-                      ),
-                    ),
-                    error: (message) => Container(
-                      width: 1.sw,
-                      alignment: Alignment.topCenter,
-                      child: GeneralEmptyErrorWidget(
-                        titleText: 'As Receptionist',
-                        descText: message,
-                        customUrlImage: AssetConstant.drawError,
-                      ),
-                    ),
-                    success: (data) {
-                      return ListView.builder(
-                        itemCount: data.data?.length ?? 0,
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        itemBuilder: (context, index) {
-                          var eventdata = data.data?[index].event;
-                          final eventModel = EventModel.fromEventData(
-                            eventdata,
-                          );
-                          return Padding(
-                            padding: const EdgeInsets.all(8),
-                            child: GestureDetector(
-                              onTap: () {
-                                Get.toNamed(
-                                  MainRoute.detailEvent,
-                                  arguments: {
-                                    'eventData': eventModel.toJson(),
-                                  },
-                                );
-                              },
-                              child: CardThisMonthEvent(
-                                eventModel: eventModel,
-                              ),
-                            ),
-                          );
-                        },
-                      );
-                    },
-                  ) ??
-                  const SizedBox(),
+            GetBuilder<EventController>(
+              id: 'widget',
+              builder: (state) {
+                return Column(
+                  children: [
+                    ...state.widget,
+                    SizedBox(height: 24.h),
+                  ],
+                );
+              },
             ),
           ],
         ),

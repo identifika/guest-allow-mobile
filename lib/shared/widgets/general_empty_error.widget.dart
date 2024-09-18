@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:guest_allow/configs/themes/main_color.dart';
 import 'package:guest_allow/constants/commons/asset_constant.dart';
 import 'package:guest_allow/shared/behavior/no_scroll_glow.behavior.dart';
 
@@ -22,8 +23,8 @@ class GeneralEmptyErrorWidget extends StatelessWidget {
 
   const GeneralEmptyErrorWidget({
     super.key,
-    this.descText = 'Maaf, saat ini data kamu tidak tersedia',
-    this.titleText = 'Data tidak tersedia',
+    this.descText = 'Sorry, your data is not available at the moment',
+    this.titleText = 'Data not available',
     this.customDescTextStyle,
     this.customTitleTextStyle,
     this.customHeightContent,
@@ -38,8 +39,8 @@ class GeneralEmptyErrorWidget extends StatelessWidget {
 
   const GeneralEmptyErrorWidget.custom({
     super.key,
-    this.descText = 'Maaf, saat ini data kamu tidak tersedia',
-    this.titleText = 'Data tidak tersedia',
+    this.descText = 'Sorry, your data is not available at the moment',
+    this.titleText = 'Data not available',
     this.customDescTextStyle,
     this.customHeightContent,
     this.customTitleTextStyle,
@@ -54,7 +55,7 @@ class GeneralEmptyErrorWidget extends StatelessWidget {
 
   const GeneralEmptyErrorWidget.removeTitle({
     super.key,
-    this.descText = 'Maaf, saat ini data kamu tidak tersedia',
+    this.descText = 'Sorry, your data is not available at the moment',
     this.customDescTextStyle,
     this.customHeightContent,
     this.onRefresh,
@@ -72,6 +73,8 @@ class GeneralEmptyErrorWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return (onRefresh != null)
         ? RefreshIndicator(
+            color: MainColor.primary,
+            backgroundColor: MainColor.white,
             onRefresh: () async {
               onRefresh!();
             },

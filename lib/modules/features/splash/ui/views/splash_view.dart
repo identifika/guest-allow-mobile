@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:guest_allow/configs/themes/main_color.dart';
 import 'package:guest_allow/modules/features/splash/controllers/splash.controller.dart';
 
 class SplashView extends StatelessWidget {
@@ -8,9 +9,14 @@ class SplashView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     Get.put(SplashController());
-    return const Scaffold(
+    return Scaffold(
+      backgroundColor: MainColor.backgroundColor,
       body: Center(
-        child: Text('Splash Screen'),
+        child: Image.asset(
+          "assets/img/icon.png",
+          width: 100,
+          height: 100,
+        ),
       ),
     );
   }

@@ -3,6 +3,8 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:guest_allow/configs/themes/main_color.dart';
 import 'package:guest_allow/modules/features/face_liveness/controllers/face_liveness_confirmation_controller.dart';
+import 'package:guest_allow/modules/features/face_liveness/extensions/itteration_ext.dart';
+import 'package:guest_allow/modules/features/face_liveness/view/ui/step_wizard_widget.dart';
 
 class FaceLivenessConfirmationScreen extends StatelessWidget {
   const FaceLivenessConfirmationScreen({super.key});
@@ -31,6 +33,7 @@ class FaceLivenessConfirmationScreen extends StatelessWidget {
             controller.onBack();
           },
         ),
+        bottom: _buildBottomAppBarWidget(),
       ),
       body: SingleChildScrollView(
         padding: EdgeInsets.symmetric(horizontal: 24.w),
@@ -140,6 +143,41 @@ class FaceLivenessConfirmationScreen extends StatelessWidget {
             )
           ],
         ),
+      ),
+    );
+  }
+
+  PreferredSize _buildBottomAppBarWidget() {
+    var controller = FaceLivenessConfirmationController.to;
+    return PreferredSize(
+      preferredSize: const Size.fromHeight(kToolbarHeight),
+      child: Padding(
+        padding: EdgeInsets.only(
+          left: 16.w,
+          right: 16.w,
+          bottom: 16.w,
+        ),
+        child: Row(
+            children: controller.listStep
+                .extMapIndexed(
+                  (e, i) => Expanded(
+                    child: Row(
+                      children: [
+                        Expanded(
+                          flex: 1,
+                          child: StepWizardWidget(
+                            active: i <= controller.curIndexStep,
+                            title: e,
+                          ),
+                        ),
+                        SizedBox(
+                          width: (i == controller.listStep.length) ? 0 : 10.w,
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+                .toList()),
       ),
     );
   }

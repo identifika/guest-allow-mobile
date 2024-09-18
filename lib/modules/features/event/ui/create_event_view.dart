@@ -31,12 +31,16 @@ class CreateEventView extends StatelessWidget {
                 children: [
                   Row(
                     children: [
-                      Text(
-                        "Create Event",
-                        style: TextStyle(
-                          fontSize: 16.sp,
-                          fontWeight: FontWeight.w600,
-                          color: MainColor.greyTextColor,
+                      Obx(
+                        () => Text(
+                          controller.isEditing.value
+                              ? "Edit Event"
+                              : "Create Event",
+                          style: TextStyle(
+                            fontSize: 16.sp,
+                            fontWeight: FontWeight.w600,
+                            color: MainColor.greyTextColor,
+                          ),
                         ),
                       ),
                       const Spacer(),
@@ -197,6 +201,7 @@ class CreateEventView extends StatelessWidget {
                                         controller.selectedEventStatus.value =
                                             0;
                                       },
+                                      activeColor: MainColor.primary,
                                     ),
                                     Text(
                                       "Online",
@@ -224,6 +229,7 @@ class CreateEventView extends StatelessWidget {
                                         controller.selectedEventStatus.value =
                                             1;
                                       },
+                                      activeColor: MainColor.primary,
                                     ),
                                     Text(
                                       "Offline",
@@ -249,7 +255,6 @@ class CreateEventView extends StatelessWidget {
                                 height: 16.h,
                               ),
                               TextFormField(
-                                onTap: () {},
                                 controller: controller.linkController,
                                 decoration: const InputDecoration(
                                   labelText: 'Link',
@@ -368,6 +373,7 @@ class CreateEventView extends StatelessWidget {
                                       onChanged: (value) {
                                         controller.selectedEventType.value = 1;
                                       },
+                                      activeColor: MainColor.primary,
                                     ),
                                     Text(
                                       "Public",
@@ -394,6 +400,7 @@ class CreateEventView extends StatelessWidget {
                                       onChanged: (value) {
                                         controller.selectedEventType.value = 0;
                                       },
+                                      activeColor: MainColor.primary,
                                     ),
                                     Text(
                                       "Private",
@@ -441,7 +448,18 @@ class CreateEventView extends StatelessWidget {
                                       .map(
                                         (e) => Visibility(
                                           child: Chip(
-                                            label: Text(e.name ?? ''),
+                                            backgroundColor: MainColor.primary,
+                                            label: Text(
+                                              e.name ?? '',
+                                              style: const TextStyle(
+                                                color: Colors.white,
+                                              ),
+                                            ),
+                                            deleteIcon: const Icon(
+                                              Icons.close,
+                                              color: Colors.white,
+                                              size: 16,
+                                            ),
                                             onDeleted: () {
                                               state.removeParticipant(
                                                   e.id ?? "");
@@ -456,8 +474,12 @@ class CreateEventView extends StatelessWidget {
                                       visible:
                                           state.selectedParticipants.length > 3,
                                       child: Chip(
+                                        backgroundColor: MainColor.primary,
                                         label: Text(
                                           "+${state.selectedParticipants.length - 3}",
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                          ),
                                         ),
                                       ),
                                     ),
@@ -526,9 +548,182 @@ class CreateEventView extends StatelessWidget {
                       );
                     },
                   ),
+
+                  GetBuilder<CreateEventController>(
+                    id: 'guests',
+                    builder: (state) {
+                      return Conditional.single(
+                        context: context,
+                        conditionBuilder: (context) =>
+                            state.selectedGuests.isNotEmpty,
+                        widgetBuilder: (context) => Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            SizedBox(
+                              height: 16.h,
+                            ),
+                            Tooltip(
+                              message:
+                                  "Guests are the people who are invited to the event without having access to the application. You can manage the guests by adding or removing them by click the 'Add Guests' button.",
+                              triggerMode: TooltipTriggerMode.tap,
+                              padding: const EdgeInsets.all(8),
+                              margin: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    "Guests",
+                                    style: TextStyle(
+                                      fontSize: 14.sp,
+                                      color: MainColor.blackTextColor,
+                                    ),
+                                  ),
+                                  const SizedBox(
+                                    width: 2,
+                                  ),
+                                  // Icon exclamtion
+                                  const Icon(
+                                    Icons.info,
+                                    color: MainColor.primary,
+                                    size: 16,
+                                  ),
+                                ],
+                              ),
+                            ),
+                            SizedBox(
+                              height: 16.h,
+                            ),
+                            Wrap(
+                              spacing: 8.w,
+                              runSpacing: 8.h,
+                              children: state.selectedGuests
+                                      .map(
+                                        (e) => Visibility(
+                                          child: Chip(
+                                            backgroundColor: MainColor.primary,
+                                            label: Text(
+                                              e.name ?? '',
+                                              style: const TextStyle(
+                                                color: Colors.white,
+                                              ),
+                                            ),
+                                            deleteIcon: const Icon(
+                                              Icons.close,
+                                              color: Colors.white,
+                                              size: 16,
+                                            ),
+                                            onDeleted: () {
+                                              state.removeGuest(e.id ?? "");
+                                            },
+                                          ),
+                                        ),
+                                      )
+                                      .take(3)
+                                      .toList() +
+                                  [
+                                    Visibility(
+                                      visible: state.selectedGuests.length > 3,
+                                      child: Chip(
+                                        backgroundColor: MainColor.primary,
+                                        label: Text(
+                                          "+${state.selectedGuests.length - 3}",
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    Visibility(
+                                      child: GestureDetector(
+                                        onTap: () {
+                                          state.selectGuests();
+                                        },
+                                        child: Chip(
+                                          label: const Text(
+                                            "Add Guests",
+                                          ),
+                                          backgroundColor: Colors.grey[200],
+                                          deleteIcon: Container(
+                                            width: 24.w,
+                                            height: 24.h,
+                                            decoration: BoxDecoration(
+                                              shape: BoxShape.circle,
+                                              color: Colors.grey[300],
+                                            ),
+                                            child: Center(
+                                              child: Icon(
+                                                Icons.add,
+                                                color: MainColor.primary,
+                                                size: 16.sp,
+                                              ),
+                                            ),
+                                          ),
+                                          onDeleted: () {
+                                            state.selectGuests();
+                                          },
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                            ),
+                          ],
+                        ),
+                        fallbackBuilder: (context) => Obx(
+                          () => Visibility(
+                            visible: controller.showAddGuest.value,
+                            child: Column(
+                              children: [
+                                SizedBox(
+                                  height: 16.h,
+                                ),
+                                Container(
+                                  padding: EdgeInsets.symmetric(
+                                      horizontal: 12.w, vertical: 8.h),
+                                  decoration: BoxDecoration(
+                                    border: Border.all(
+                                      color: MainColor.primaryDarker,
+                                    ),
+                                    borderRadius: BorderRadius.circular(8.r),
+                                  ),
+                                  child: GestureDetector(
+                                    onTap: () {
+                                      state.selectGuests();
+                                    },
+                                    child: Row(
+                                      children: [
+                                        Icon(
+                                          Icons.info,
+                                          color: MainColor.primary,
+                                          size: 16.sp,
+                                        ),
+                                        const SizedBox(
+                                          width: 4,
+                                        ),
+                                        Text(
+                                          "Didn't see the users you're looking for? Try add guest",
+                                          style: TextStyle(
+                                            color: MainColor.primary,
+                                            fontSize: 14.sp,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+
                   SizedBox(
                     height: 16.h,
                   ),
+
                   GetBuilder<CreateEventController>(
                     id: 'receptionists',
                     builder: (state) {
@@ -556,7 +751,18 @@ class CreateEventView extends StatelessWidget {
                                       .map(
                                         (e) => Visibility(
                                           child: Chip(
-                                            label: Text(e.name ?? ''),
+                                            backgroundColor: MainColor.primary,
+                                            label: Text(
+                                              e.name ?? '',
+                                              style: const TextStyle(
+                                                color: Colors.white,
+                                              ),
+                                            ),
+                                            deleteIcon: const Icon(
+                                              Icons.close,
+                                              color: Colors.white,
+                                              size: 16,
+                                            ),
                                             onDeleted: () {
                                               state.removeReceptionist(
                                                   e.id ?? "");
@@ -572,8 +778,12 @@ class CreateEventView extends StatelessWidget {
                                           state.selectedReceptionists.length >
                                               3,
                                       child: Chip(
+                                        backgroundColor: MainColor.primary,
                                         label: Text(
                                           "+${state.selectedReceptionists.length - 3}",
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                          ),
                                         ),
                                       ),
                                     ),
@@ -642,9 +852,186 @@ class CreateEventView extends StatelessWidget {
                       );
                     },
                   ),
+
+                  GetBuilder<CreateEventController>(
+                    id: 'receptionists_guests',
+                    builder: (state) {
+                      return Conditional.single(
+                        context: context,
+                        conditionBuilder: (context) =>
+                            state.selectedReceptionistGuests.isNotEmpty,
+                        widgetBuilder: (context) => Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            SizedBox(
+                              height: 16.h,
+                            ),
+                            Tooltip(
+                              message:
+                                  "Guest Receptionist are essential personnel assigned to assist with event management. While they may not have access to the application, you can manage receptionists by adding or removing them using the 'Add Guest Receptionist' button.",
+                              triggerMode: TooltipTriggerMode.tap,
+                              padding: const EdgeInsets.all(8),
+                              margin: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    "Guest Receptionist",
+                                    style: TextStyle(
+                                      fontSize: 14.sp,
+                                      color: MainColor.blackTextColor,
+                                    ),
+                                  ),
+                                  const SizedBox(
+                                    width: 2,
+                                  ),
+                                  // Icon exclamtion
+                                  const Icon(
+                                    Icons.info,
+                                    color: MainColor.primary,
+                                    size: 16,
+                                  ),
+                                ],
+                              ),
+                            ),
+                            SizedBox(
+                              height: 16.h,
+                            ),
+                            Wrap(
+                              spacing: 8.w,
+                              runSpacing: 8.h,
+                              children: state.selectedReceptionistGuests
+                                      .map(
+                                        (e) => Visibility(
+                                          child: Chip(
+                                            backgroundColor: MainColor.primary,
+                                            label: Text(
+                                              e.name ?? '',
+                                              style: const TextStyle(
+                                                color: Colors.white,
+                                              ),
+                                            ),
+                                            deleteIcon: const Icon(
+                                              Icons.close,
+                                              color: Colors.white,
+                                              size: 16,
+                                            ),
+                                            onDeleted: () {
+                                              state.removeReceptionistGuest(
+                                                  e.id ?? "");
+                                            },
+                                          ),
+                                        ),
+                                      )
+                                      .take(3)
+                                      .toList() +
+                                  [
+                                    Visibility(
+                                      visible: state.selectedReceptionistGuests
+                                              .length >
+                                          3,
+                                      child: Chip(
+                                        backgroundColor: MainColor.primary,
+                                        label: Text(
+                                          "+${state.selectedReceptionistGuests.length - 3}",
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    Visibility(
+                                      child: GestureDetector(
+                                        onTap: () {
+                                          state.selectReceptionistGuests();
+                                        },
+                                        child: Chip(
+                                          label: const Text(
+                                            "Add Guest Receptionist",
+                                          ),
+                                          backgroundColor: Colors.grey[200],
+                                          deleteIcon: Container(
+                                            width: 24.w,
+                                            height: 24.h,
+                                            decoration: BoxDecoration(
+                                              shape: BoxShape.circle,
+                                              color: Colors.grey[300],
+                                            ),
+                                            child: Center(
+                                              child: Icon(
+                                                Icons.add,
+                                                color: MainColor.primary,
+                                                size: 16.sp,
+                                              ),
+                                            ),
+                                          ),
+                                          onDeleted: () {
+                                            state.selectReceptionistGuests();
+                                          },
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                            ),
+                          ],
+                        ),
+                        fallbackBuilder: (context) => Obx(
+                          () => Visibility(
+                            visible: controller.showAddReceptionist.value,
+                            child: Column(
+                              children: [
+                                SizedBox(
+                                  height: 16.h,
+                                ),
+                                Container(
+                                  padding: EdgeInsets.symmetric(
+                                      horizontal: 12.w, vertical: 8.h),
+                                  decoration: BoxDecoration(
+                                    border: Border.all(
+                                      color: MainColor.primaryDarker,
+                                    ),
+                                    borderRadius: BorderRadius.circular(8.r),
+                                  ),
+                                  child: GestureDetector(
+                                    onTap: () {
+                                      state.selectReceptionistGuests();
+                                    },
+                                    child: Row(
+                                      children: [
+                                        Icon(
+                                          Icons.info,
+                                          color: MainColor.primary,
+                                          size: 16.sp,
+                                        ),
+                                        const SizedBox(
+                                          width: 4,
+                                        ),
+                                        Expanded(
+                                          child: Text(
+                                            "Didn't see the users you're looking for? Try add guest receptionist",
+                                            style: TextStyle(
+                                              color: MainColor.primary,
+                                              fontSize: 14.sp,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
                   SizedBox(
                     height: 16.h,
                   ),
+
                   // photo upload
                   Container(
                     padding: EdgeInsets.symmetric(horizontal: 12.w),
@@ -761,10 +1148,16 @@ class CreateEventView extends StatelessWidget {
                           borderRadius: BorderRadius.circular(8.r),
                         ),
                       ),
-                      child: const Text(
-                        "Create",
-                        style: TextStyle(
-                          color: Colors.white,
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(vertical: 12.h),
+                        child: Text(
+                          controller.isEditing.value
+                              ? "Update Event"
+                              : "Create Event",
+                          style: TextStyle(
+                            fontSize: 16.sp,
+                            color: Colors.white,
+                          ),
                         ),
                       ),
                     ),

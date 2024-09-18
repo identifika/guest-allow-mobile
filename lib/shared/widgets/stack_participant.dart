@@ -6,7 +6,7 @@ class StackParticipant extends StatelessWidget {
   final double width;
   final double height;
   final double fontSize;
-  final double positionText;
+  final double? positionText;
   final List<UserModel>? createdBy;
   final int? totalParticipant;
 
@@ -14,7 +14,7 @@ class StackParticipant extends StatelessWidget {
     required this.fontSize,
     required this.width,
     required this.height,
-    required this.positionText,
+    this.positionText,
     this.createdBy,
     this.totalParticipant,
     super.key,
@@ -72,6 +72,7 @@ class StackParticipant extends StatelessWidget {
                               ? loadingProgress.cumulativeBytesLoaded /
                                   loadingProgress.expectedTotalBytes!
                               : null,
+                          color: MainColor.primary,
                         ),
                       ),
                     );
@@ -79,13 +80,16 @@ class StackParticipant extends StatelessWidget {
                 ),
               ),
             ),
-          Positioned(
-            left: positionText,
-            child: Text(
-              "+$totalParticipant participant",
-              style: TextStyle(
-                color: MainColor.primary,
-                fontSize: fontSize,
+          Visibility(
+            visible: totalParticipant != null && positionText != null,
+            child: Positioned(
+              left: positionText,
+              child: Text(
+                "+$totalParticipant participant",
+                style: TextStyle(
+                  color: MainColor.primary,
+                  fontSize: fontSize,
+                ),
               ),
             ),
           )

@@ -3,9 +3,9 @@ import 'package:flutter_conditional_rendering/flutter_conditional_rendering.dart
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:guest_allow/configs/routes/main_route.dart';
+import 'package:guest_allow/modules/features/event/ui/widgets/button_event_state.dart';
 import 'package:guest_allow/modules/features/event/ui/widgets/map_widget.dart';
 import 'package:guest_allow/modules/features/home/responses/get_popular_event.response.dart';
-import 'package:guest_allow/shared/widgets/countdown_timer.widget.dart';
 import 'package:guest_allow/shared/widgets/custom_dialog.widget.dart';
 import 'package:readmore/readmore.dart';
 import 'package:guest_allow/configs/themes/main_color.dart';
@@ -144,11 +144,11 @@ class DetailView extends StatelessWidget {
                       padding: 0,
                       margin: 0,
                     ),
-                    success: (eventModel) => _buildBottomBar(
-                      context,
-                      eventModel!,
-                      state.eventDetailType,
-                      state.eventStatus,
+                    success: (eventModel) => ButtonEventState(
+                      eventModel: eventModel!,
+                      type: state.eventDetailType,
+                      eventStatus: state.eventStatus,
+                      controller: state,
                     ),
                     error: (message) => Center(
                       child: Text(message),
@@ -167,124 +167,11 @@ class DetailView extends StatelessWidget {
     );
   }
 
-  Widget _buildBottomBar(
-    BuildContext context,
-    EventData eventModel,
-    EventDetailType type,
-    EventStatus eventStatus,
-  ) {
-    var now = DateTime.now();
-
-    return ClipRRect(
-      borderRadius: const BorderRadius.only(
-        topLeft: Radius.circular(16),
-        topRight: Radius.circular(16),
-      ),
-      child: Container(
-        height: 80,
-        padding: const EdgeInsets.symmetric(horizontal: 34, vertical: 16),
-        decoration: const BoxDecoration(color: Colors.white),
-        child: Conditional.single(
-          context: context,
-          conditionBuilder: (context) => type == EventDetailType.guest,
-          fallbackBuilder: (_) => _SetEventStatus(
-            eventModel: eventModel,
-            type: type,
-            eventStatus: eventStatus,
-          ),
-          widgetBuilder: (_) => ConditionalSwitch.single(
-            context: context,
-            valueBuilder: (context) => eventStatus,
-            caseBuilders: {
-              EventStatus.onGoing: (context) => const SizedBox(),
-              // SizedBox(
-              //       width: 1.sw,
-              //       child: ElevatedButton(
-              //         onPressed: () {},
-              //         style: ElevatedButton.styleFrom(
-              //           backgroundColor: MainColor.primary,
-              //           elevation: 0,
-              //           shape: RoundedRectangleBorder(
-              //             borderRadius: BorderRadius.circular(16),
-              //           ),
-              //           padding: const EdgeInsets.symmetric(
-              //             vertical: 10,
-              //             horizontal: 20,
-              //           ),
-              //           maximumSize: const Size(200, 150),
-              //         ),
-              //         child: const Text(
-              //           "Show Attendees",
-              //           style: TextStyle(color: Colors.white, fontSize: 16),
-              //         ),
-              //       ),
-              //     ),
-              EventStatus.upcoming: (context) => SizedBox(
-                    width: 1.sw,
-                    child: ElevatedButton(
-                      onPressed: now.isAfter(tz.TZDateTime.from(
-                        DateTime.tryParse(eventModel.startDate ?? "") ??
-                            DateTime.now(),
-                        tz.getLocation(eventModel.timeZone ?? ''),
-                      ).toLocal())
-                          ? null
-                          : () {
-                              Get.find<DetailEventController>().dialogJoinEvent(
-                                eventModel.id ?? "",
-                                eventModel.title ?? "",
-                              );
-                            },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: MainColor.primary,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        padding: const EdgeInsets.symmetric(
-                          vertical: 10,
-                          horizontal: 20,
-                        ),
-                        maximumSize: const Size(200, 150),
-                      ),
-                      child: const Text(
-                        "Join Event",
-                        style: TextStyle(color: Colors.white, fontSize: 16),
-                      ),
-                    ),
-                  ),
-              EventStatus.finished: (context) => SizedBox(
-                    width: 1.sw,
-                    child: ElevatedButton(
-                      onPressed: null,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: MainColor.primary,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        padding: const EdgeInsets.symmetric(
-                          vertical: 10,
-                          horizontal: 20,
-                        ),
-                        maximumSize: const Size(200, 150),
-                      ),
-                      child: const Text(
-                        "Event is finished",
-                        style: TextStyle(color: Colors.white, fontSize: 16),
-                      ),
-                    ),
-                  ),
-            },
-          ),
-        ),
-      ),
-    );
-  }
-
   Widget _buildAppBar(
     BuildContext context,
     EventDetailType type,
     EventStatus eventStatus,
+    EventData eventModel,
   ) =>
       Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -300,8 +187,7 @@ class DetailView extends StatelessWidget {
             },
           ),
           Visibility(
-            visible: type == EventDetailType.owner ||
-                type == EventDetailType.receptionist,
+            visible: type == EventDetailType.owner,
             child: CircleButton(
               icon: const Icon(
                 Icons.more_horiz,
@@ -315,6 +201,7 @@ class DetailView extends StatelessWidget {
                       context,
                       type,
                       eventStatus,
+                      eventModel,
                     );
                   },
                 );
@@ -325,7 +212,12 @@ class DetailView extends StatelessWidget {
       );
 
   Container _modalBottomSheet(
-      BuildContext context, EventDetailType type, EventStatus eventStatus) {
+    BuildContext context,
+    EventDetailType type,
+    EventStatus eventStatus,
+    EventData eventModel,
+  ) {
+    var controller = Get.find<DetailEventController>();
     return Container(
       width: 1.sw,
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
@@ -342,87 +234,122 @@ class DetailView extends StatelessWidget {
                         valueBuilder: (context) => eventStatus,
                         caseBuilders: {
                           EventStatus.onGoing: (context) => [
-                                ListTile(
-                                  onTap: () {},
-                                  title: const Text("View Attendees"),
-                                ),
-                                ListTile(
-                                  onTap: () {},
-                                  title: const Text("View Receptionist"),
-                                ),
-                                ListTile(
-                                  onTap: () {},
-                                  title: const Text("Receive Attendees"),
-                                ),
+                                _viewAttendeesListTile(eventModel),
+                                _viewReceptionistListTile(eventModel),
+                                _receiveAttendeesTile(eventModel, controller),
+                                _editEventListTile(eventModel, controller),
+                                _deleteEventListTile(controller, eventModel),
                               ],
                           EventStatus.upcoming: (context) => [
-                                ListTile(
-                                  onTap: () {},
-                                  title: const Text("View Attendees"),
-                                ),
-                                ListTile(
-                                  onTap: () {},
-                                  title: const Text("View Receptionist"),
-                                ),
-                                ListTile(
-                                  onTap: () {},
-                                  title: const Text("Edit Event"),
-                                ),
-                                ListTile(
-                                  onTap: () {},
-                                  title: const Text("Cancel Event"),
-                                ),
+                                _viewAttendeesListTile(eventModel),
+                                _viewReceptionistListTile(eventModel),
+                                _editEventListTile(eventModel, controller),
+                                _deleteEventListTile(controller, eventModel),
                               ],
                           EventStatus.finished: (context) => [
-                                ListTile(
-                                  onTap: () {},
-                                  title: const Text("View Attendees"),
-                                ),
-                                ListTile(
-                                  onTap: () {},
-                                  title: const Text("Recreate Event"),
-                                ),
+                                _viewAttendeesListTile(eventModel),
+                                _viewReceptionistListTile(eventModel),
+                                _recreateEventListTile(controller, eventModel),
+                                _deleteEventListTile(controller, eventModel),
                               ],
                         },
                       ),
                     ],
                   ),
-              EventDetailType.receptionist: (context) => Column(
-                    children: [
-                      ...ConditionalSwitch.list(
-                        context: context,
-                        valueBuilder: (context) => eventStatus,
-                        caseBuilders: {
-                          EventStatus.onGoing: (context) => [
-                                ListTile(
-                                  onTap: () {},
-                                  title: const Text("Receive Attendees"),
-                                ),
-                              ],
-                          EventStatus.upcoming: (context) => [
-                                ListTile(
-                                  onTap: () {},
-                                  title: const Text("View Attendees"),
-                                ),
-                                ListTile(
-                                  onTap: () {},
-                                  title: const Text("View Receptionist"),
-                                ),
-                              ],
-                          EventStatus.finished: (context) => [
-                                ListTile(
-                                  onTap: () {},
-                                  title: const Text("View Attendees"),
-                                ),
-                              ],
-                        },
-                      ),
-                    ],
-                  ),
+              // EventDetailType.receptionist: (context) => Column(
+              //       children: [
+              //         ...ConditionalSwitch.list(
+              //           context: context,
+              //           valueBuilder: (context) => eventStatus,
+              //           caseBuilders: {
+              //             EventStatus.onGoing: (context) => [
+              //                   _receiveAttendeesTile(eventModel, controller),
+              //                 ],
+              //             // EventStatus.upcoming: (context) => [
+              //             //       _viewAttendeesListTile(eventModel),
+              //             //     ],
+              //             // EventStatus.finished: (context) => [
+              //             //       _viewAttendeesListTile(eventModel),
+              //             //     ],
+              //           },
+              //         ),
+              //       ],
+              //     ),
             },
           ),
         ],
       ),
+    );
+  }
+
+  ListTile _recreateEventListTile(
+      DetailEventController controller, EventData eventModel) {
+    return ListTile(
+      onTap: () {
+        controller.recreateEvent(eventModel);
+      },
+      title: const Text("Recreate Event"),
+    );
+  }
+
+  ListTile _deleteEventListTile(
+      DetailEventController controller, EventData eventModel) {
+    return ListTile(
+      onTap: () {
+        controller.deleteEventConfirmation(eventModel.id ?? "");
+      },
+      title: const Text("Cancel Event"),
+    );
+  }
+
+  ListTile _editEventListTile(
+      EventData eventModel, DetailEventController controller) {
+    return ListTile(
+      onTap: () async {
+        await Get.toNamed(
+          MainRoute.createEvent,
+          arguments: eventModel,
+        );
+        controller.getEventDetail(eventModel.id ?? "");
+      },
+      title: const Text("Edit Event"),
+    );
+  }
+
+  ListTile _viewReceptionistListTile(EventData eventModel) {
+    return ListTile(
+      onTap: () {
+        Get.toNamed(
+          MainRoute.showReceptionists,
+          arguments: eventModel,
+        );
+      },
+      title: const Text("View Receptionist"),
+    );
+  }
+
+  Visibility _receiveAttendeesTile(
+      EventData eventModel, DetailEventController controller) {
+    return Visibility(
+      visible: eventModel.type == 1,
+      child: ListTile(
+        onTap: () {
+          controller.receiveAttende(eventModel);
+        },
+        title: const Text("Receive Attendees"),
+      ),
+    );
+  }
+
+  ListTile _viewAttendeesListTile(EventData eventModel) {
+    return ListTile(
+      onTap: () {
+        Get.toNamed(
+          MainRoute.showAttendees,
+          arguments: eventModel,
+        );
+      },
+      title: const Text("View Attendees"),
     );
   }
 
@@ -450,6 +377,7 @@ class DetailView extends StatelessWidget {
               context,
               type,
               eventStatus,
+              eventModel,
             ),
             Padding(
               padding: const EdgeInsets.symmetric(
@@ -689,6 +617,26 @@ class DetailView extends StatelessWidget {
                           ],
                         ),
                       ),
+                      if (type == EventDetailType.owner &&
+                          eventModel.isImported == 1) ...[
+                        const SizedBox(width: 12),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                              color: MainColor.info,
+                              borderRadius: BorderRadius.circular(16)),
+                          child: const Text(
+                            "Imported",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                            ),
+                          ),
+                        ),
+                      ],
                     ],
                   ),
                   const SizedBox(height: 24),
@@ -730,16 +678,25 @@ class DetailView extends StatelessWidget {
                       SizedBox(
                         height: 24,
                         child: StackParticipant(
-                          createdBy: eventModel.participants,
+                          createdBy: (eventModel.participants ?? []).length > 5
+                              ? (eventModel.participants ?? [])
+                                  .getRange(0, 5)
+                                  .toList()
+                              : eventModel.participants ?? [],
                           fontSize: 12,
                           width: 20,
                           height: 20,
-                          positionText: (eventModel.participantsCount ?? 0) > 5
-                              ? 95
-                              : ((eventModel.participantsCount ?? 0) * 12.0) +
-                                  16,
+                          positionText:
+                              (eventModel.participants ?? []).length > 5
+                                  ? (((eventModel.participants ?? [])
+                                                  .getRange(0, 5)
+                                                  .toList())
+                                              .length *
+                                          12.0) +
+                                      18
+                                  : null,
                           totalParticipant:
-                              eventModel.participants?.length ?? 0,
+                              (eventModel.participants?.length ?? 0) - 5,
                         ),
                       ),
                     ],
@@ -751,292 +708,6 @@ class DetailView extends StatelessWidget {
           ],
         ),
       );
-}
-
-class _SetEventStatus extends StatelessWidget {
-  const _SetEventStatus({
-    required this.eventModel,
-    required this.type,
-    required this.eventStatus,
-  });
-
-  final EventData eventModel;
-  final EventDetailType type;
-  final EventStatus eventStatus;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      child: ConditionalSwitch.single(
-        context: context,
-        valueBuilder: (context) => type,
-        caseBuilders: {
-          EventDetailType.owner: (context) => ConditionalSwitch.single(
-                context: context,
-                valueBuilder: (context) => eventStatus,
-                caseBuilders: {
-                  EventStatus.onGoing: (context) => SizedBox(
-                        width: 1.sw,
-                        child: ElevatedButton(
-                          onPressed: () {},
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: MainColor.primary,
-                            elevation: 0,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            padding: const EdgeInsets.symmetric(
-                              vertical: 10,
-                              horizontal: 20,
-                            ),
-                            maximumSize: const Size(200, 150),
-                          ),
-                          child: const Text(
-                            "Show Attendees",
-                            style: TextStyle(color: Colors.white, fontSize: 16),
-                          ),
-                        ),
-                      ),
-                  EventStatus.upcoming: (context) => SizedBox(
-                        width: 1.sw,
-                        child: ElevatedButton(
-                          onPressed: () {},
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: MainColor.primary,
-                            elevation: 0,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            padding: const EdgeInsets.symmetric(
-                              vertical: 10,
-                              horizontal: 20,
-                            ),
-                            maximumSize: const Size(200, 150),
-                          ),
-                          child: const Text(
-                            "Edit Event",
-                            style: TextStyle(color: Colors.white, fontSize: 16),
-                          ),
-                        ),
-                      ),
-                  EventStatus.finished: (context) => SizedBox(
-                        width: 1.sw,
-                        child: ElevatedButton(
-                          onPressed: () {},
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: MainColor.primary,
-                            elevation: 0,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            padding: const EdgeInsets.symmetric(
-                              vertical: 10,
-                              horizontal: 20,
-                            ),
-                            maximumSize: const Size(200, 150),
-                          ),
-                          child: const Text(
-                            "Event is finished, Show Attendees",
-                            style: TextStyle(color: Colors.white, fontSize: 16),
-                          ),
-                        ),
-                      ),
-                },
-              ),
-          EventDetailType.participant: (context) => ConditionalSwitch.single(
-                context: context,
-                valueBuilder: (context) => eventStatus,
-                caseBuilders: {
-                  EventStatus.onGoing: (context) => SizedBox(
-                        width: 1.sw,
-                        child: ElevatedButton(
-                          onPressed: () {
-                            if (eventModel.type == 0) {
-                              Get.find<DetailEventController>()
-                                  .attendOnlineEvent(eventModel.link ?? "");
-                            } else {
-                              if (eventModel.myArrival != null) {
-                                showModalBottomSheet(
-                                  context: context,
-                                  builder: (context) {
-                                    return _modalBottomSheet(
-                                      context,
-                                      eventModel,
-                                    );
-                                  },
-                                );
-                              } else {
-                                Get.toNamed(
-                                  MainRoute.attendEvent,
-                                  arguments: eventModel,
-                                );
-                              }
-                            }
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: MainColor.primary,
-                            elevation: 0,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            padding: const EdgeInsets.symmetric(
-                              vertical: 10,
-                              horizontal: 20,
-                            ),
-                            maximumSize: const Size(200, 150),
-                          ),
-                          child: Text(
-                            eventModel.myArrival != null && eventModel.type == 1
-                                ? "You are in this event"
-                                : "Join Event",
-                            style: const TextStyle(
-                                color: Colors.white, fontSize: 16),
-                          ),
-                        ),
-                      ),
-                  EventStatus.upcoming: (context) => SizedBox(
-                        width: 1.sw,
-                        child: ElevatedButton(
-                          onPressed: null,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: MainColor.primary,
-                            elevation: 0,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            padding: const EdgeInsets.symmetric(
-                              vertical: 10,
-                              horizontal: 20,
-                            ),
-                            maximumSize: const Size(200, 150),
-                          ),
-                          child: CountDownTimer(
-                            secondsRemaining:
-                                DateTime.tryParse(eventModel.startDate ?? "")
-                                        ?.difference(DateTime.now())
-                                        .inSeconds ??
-                                    0,
-                            whenTimeExpires: () {},
-                            countDownTimerStyle: const TextStyle(
-                              fontSize: 16,
-                              color: MainColor.blackTextColor,
-                            ),
-                            text: "Event starts in",
-                          ),
-                        ),
-                      ),
-                  EventStatus.finished: (context) => SizedBox(
-                        width: 1.sw,
-                        child: ElevatedButton(
-                          onPressed: null,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: MainColor.primary,
-                            elevation: 0,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            padding: const EdgeInsets.symmetric(
-                              vertical: 10,
-                              horizontal: 20,
-                            ),
-                            maximumSize: const Size(200, 150),
-                          ),
-                          child: const Text(
-                            "Event is finished",
-                            style: TextStyle(color: Colors.white, fontSize: 16),
-                          ),
-                        ),
-                      ),
-                },
-              ),
-          EventDetailType.receptionist: (context) => ConditionalSwitch.single(
-                context: context,
-                valueBuilder: (context) => eventStatus,
-                caseBuilders: {
-                  EventStatus.onGoing: (context) => SizedBox(
-                        width: 1.sw,
-                        child: ElevatedButton(
-                          onPressed: () {},
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: MainColor.primary,
-                            elevation: 0,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            padding: const EdgeInsets.symmetric(
-                              vertical: 10,
-                              horizontal: 20,
-                            ),
-                            maximumSize: const Size(200, 150),
-                          ),
-                          child: const Text(
-                            "Receive Attendees",
-                            style: TextStyle(color: Colors.white, fontSize: 16),
-                          ),
-                        ),
-                      ),
-                  // count down
-                  EventStatus.upcoming: (context) => SizedBox(
-                        // // count down
-                        width: 1.sw,
-                        child: ElevatedButton(
-                          onPressed: null,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: MainColor.primary,
-                            elevation: 0,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            padding: const EdgeInsets.symmetric(
-                              vertical: 10,
-                              horizontal: 20,
-                            ),
-                            maximumSize: const Size(200, 150),
-                          ),
-                          child: CountDownTimer(
-                            secondsRemaining:
-                                DateTime.tryParse(eventModel.startDate ?? "")
-                                        ?.difference(DateTime.now())
-                                        .inSeconds ??
-                                    0,
-                            whenTimeExpires: () {},
-                            countDownTimerStyle: const TextStyle(
-                              fontSize: 16,
-                              color: MainColor.blackTextColor,
-                            ),
-                            text: "Event starts in",
-                          ),
-                        ),
-                      ),
-                  EventStatus.finished: (context) => const SizedBox(),
-                },
-              ),
-        },
-      ),
-    );
-  }
-
-  Widget _modalBottomSheet(
-    BuildContext context,
-    EventData data,
-  ) {
-    return Container(
-      width: 1.sw,
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-      child: Column(
-        children: [
-          ListTile(
-            onTap: () {},
-            title: const Text("View Attendees"),
-          ),
-          ListTile(
-            onTap: () {},
-            title: const Text("Receive Attendees"),
-          ),
-        ],
-      ),
-    );
-  }
 }
 
 class _LocationWidget extends StatelessWidget {

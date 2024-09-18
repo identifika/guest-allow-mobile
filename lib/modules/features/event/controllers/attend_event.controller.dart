@@ -1,21 +1,22 @@
 import 'dart:async';
-import 'dart:developer';
 import 'dart:io';
 import 'dart:math' show Random;
 
 import 'package:camera/camera.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
-import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 import 'package:guest_allow/constants/commons/asset_constant.dart';
 import 'package:guest_allow/modules/features/event/controllers/detail_map.controller.dart';
+import 'package:guest_allow/modules/features/event/models/requests/attend_event.request.dart';
 import 'package:guest_allow/modules/features/event/repositories/event.repository.dart';
 import 'package:guest_allow/modules/features/face_liveness/enum/motion_type_enum.dart';
 import 'package:guest_allow/modules/features/home/responses/get_popular_event.response.dart';
 import 'package:guest_allow/modules/global_controllers/maps.controller.dart';
+import 'package:guest_allow/modules/global_models/responses/nominatim_maps/find_place.response.dart';
+import 'package:guest_allow/modules/global_repositories/maps.repository.dart';
 import 'package:guest_allow/shared/widgets/custom_dialog.widget.dart';
 import 'package:guest_allow/utils/db/user_collection.db.dart';
 import 'package:guest_allow/utils/enums/api_status.enum.dart';
@@ -59,16 +60,17 @@ class AttendEventController extends GetxController {
     MotionTypeEnum.shakeHead: AssetConstant.emoticonShakeHead,
   };
   Map<MotionTypeEnum, String> wordings = {
-    MotionTypeEnum.blink: 'Kedipkan Mata',
-    MotionTypeEnum.shakeHead: 'Gelengkan Kepala',
+    MotionTypeEnum.blink: 'Blink Your Eyes',
+    MotionTypeEnum.shakeHead: 'Shake Your Head',
   };
 
   XFile? imageFile;
 
   EventRepository eventRepository = EventRepository();
+  final MapsRepository _mapsRepository = MapsRepository();
 
   Position? userPosition;
-  Placemark? userPlacemark;
+  PlaceFeature? userPlacemark;
   StreamSubscription<Position>? userPositionStream;
   late MapsController mapsController;
   DetailMapController detailMapController = DetailMapController();
@@ -78,9 +80,10 @@ class AttendEventController extends GetxController {
   void attendEvent() async {
     try {
       if (userPosition == null) {
-        CustomDialogWidget.showDialogProblem(
+        await CustomDialogWidget.showDialogProblem(
           title: 'Failed',
           description: 'Failed to get your location',
+          duration: 5,
         );
         return;
       }
@@ -97,81 +100,125 @@ class AttendEventController extends GetxController {
         );
 
         if (!onArea) {
-          CustomDialogWidget.showDialogProblem(
+          await CustomDialogWidget.showDialogProblem(
             title: 'Failed',
-            description: 'You are not in the event area',
+            description:
+                'You are not in the event area, come closer to the event area and try again',
+            duration: 5,
           );
+          reInitTheState();
           return;
         }
       }
 
       if (userPlacemark == null) {
-        List<Placemark> placemarks = await placemarkFromCoordinates(
-          userPosition!.latitude,
-          userPosition!.longitude,
+        CustomDialogWidget.showLoading();
+        var response = await _mapsRepository.nominatimReverseGeocode(
+          latitude: userPosition?.latitude ?? 0,
+          longitude: userPosition?.longitude ?? 0,
         );
 
-        userPlacemark = placemarks.first;
+        CustomDialogWidget.closeLoading();
+
+        if (ApiStatusHelper.getApiStatus(response.statusCode ?? 0) ==
+            ApiStatusEnum.success) {
+          if (((response.meta as NominatimFindPlaceResponse).features ?? [])
+              .isEmpty) {
+            await CustomDialogWidget.showDialogProblem(
+              title: 'Failed',
+              description: 'Failed to get location detail',
+              duration: 5,
+            );
+
+            reInitTheState();
+            return;
+          } else {
+            var data = (response.meta as NominatimFindPlaceResponse).features;
+            if (data != null && data.isNotEmpty) {
+              userPlacemark = data.first;
+            } else {
+              await CustomDialogWidget.showDialogProblem(
+                title: 'Failed',
+                description: 'Failed to get location detail',
+                duration: 5,
+              );
+
+              reInitTheState();
+              return;
+            }
+          }
+        } else {
+          await CustomDialogWidget.showDialogProblem(
+            title: 'Failed',
+            description: response.message ?? 'Please try again',
+            duration: 5,
+          );
+
+          reInitTheState();
+          return;
+        }
       }
 
       if (userPlacemark == null) {
-        CustomDialogWidget.showDialogProblem(
+        await CustomDialogWidget.showDialogProblem(
           title: 'Failed',
           description: 'Failed to get your location',
+          duration: 5,
         );
+
+        reInitTheState();
         return;
       }
 
       var timezone = tz.local;
       var receptionistId = user?.userId ?? '';
 
-      Map<String, dynamic> data = {
-        'latitude': userPosition?.latitude,
-        'longitude': userPosition?.longitude,
-        'location': userPlacemark?.street,
-        'receptionist_id': receptionistId,
-        'time_zone': timezone.name,
-      };
-
-      // XFile to file
-      File image = File(imageFile!.path);
+      AttendEventRequest request = AttendEventRequest(
+        latitude: userPosition?.latitude ?? 0,
+        longitude: userPosition?.longitude ?? 0,
+        location: userPlacemark?.properties?.displayName ?? '',
+        timeZone: timezone.name,
+        eventId: eventData.id ?? '',
+        receptionistId: receptionistId,
+        image: File(imageFile!.path),
+      );
 
       CustomDialogWidget.showLoading();
 
       var response = await eventRepository.attendEvent(
-        id: eventData.id ?? '',
-        data: data,
-        image: image,
+        data: request,
       );
 
       CustomDialogWidget.closeLoading();
 
-      if (ApiStatusHelper.getApiStatus(response.statusCode ?? 0) ==
-          ApiStatusEnum.success) {
-        CustomDialogWidget.showDialogSuccess(
+      if (ApiStatusHelper.isApiSuccess(response.statusCode)) {
+        await CustomDialogWidget.showDialogSuccess(
           title: 'Success',
           description: 'You have successfully joined the event',
           buttonOnTap: () {
             Get.back();
           },
+          duration: 5,
         );
+        Get.back(result: true);
       } else {
-        CustomDialogWidget.showDialogProblem(
+        await CustomDialogWidget.showDialogProblem(
           title: 'Failed',
           description: response.message ?? 'Please try again',
+          duration: 5,
         );
+
+        reInitTheState();
       }
     } catch (e) {
-      log("attendEvent: $e");
-      CustomDialogWidget.showDialogProblem(
+      await CustomDialogWidget.showDialogProblem(
         title: 'Failed',
         description: e.toString(),
+        duration: 5,
       );
-    }
-  }
 
-  void cancelJoinEvent(String id) async {
-    // call cancel join event api
+      reInitTheState();
+    }
   }
 
   void getUserPosition() async {
@@ -180,11 +227,15 @@ class AttendEventController extends GetxController {
       return;
     }
 
-    LocationPermission permission = await Geolocator.requestPermission();
+    LocationPermission permission = await Geolocator.checkPermission();
 
-    if (permission == LocationPermission.deniedForever ||
-        permission == LocationPermission.denied) {
-      return;
+    if (permission == LocationPermission.denied ||
+        permission == LocationPermission.deniedForever) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied ||
+          permission == LocationPermission.deniedForever) {
+        return;
+      }
     }
 
     Position position = await Geolocator.getCurrentPosition(
@@ -273,27 +324,13 @@ class AttendEventController extends GetxController {
           }
 
           await Future.delayed(const Duration(seconds: 1));
-          CustomDialogWidget.showDialogProblem(
+          await CustomDialogWidget.showDialogProblem(
             title: 'Failed',
             description: 'Only one face is allowed',
             buttonOnTap: () {
               Get.back();
             },
-          );
-        }
-
-        if (resFaces.isEmpty) {
-          if (Get.isOverlaysOpen) {
-            return;
-          }
-
-          await Future.delayed(const Duration(seconds: 1));
-          CustomDialogWidget.showDialogProblem(
-            title: 'Failed',
-            description: 'Face not detected',
-            buttonOnTap: () {
-              Get.back();
-            },
+            duration: 5,
           );
         }
 
@@ -346,10 +383,13 @@ class AttendEventController extends GetxController {
       );
 
       if (result == null) {
-        CustomDialogWidget.showDialogProblem(
+        await CustomDialogWidget.showDialogProblem(
           title: 'Failed',
           description: 'Please try again',
+          duration: 5,
         );
+
+        reInitTheState();
         return;
       }
 
@@ -362,18 +402,24 @@ class AttendEventController extends GetxController {
       CustomDialogWidget.closeLoading();
 
       if (faces.isEmpty) {
-        CustomDialogWidget.showDialogProblem(
+        await CustomDialogWidget.showDialogProblem(
           title: 'Face Not Detected',
           description: 'Please try again',
+          duration: 5,
         );
+
+        reInitTheState();
         return;
       }
 
       if (faces.length > 1) {
-        CustomDialogWidget.showDialogProblem(
+        await CustomDialogWidget.showDialogProblem(
           title: 'Failed',
           description: 'Only one face is allowed',
+          duration: 5,
         );
+
+        reInitTheState();
         return;
       }
 
@@ -386,7 +432,14 @@ class AttendEventController extends GetxController {
 
       await Future.delayed(const Duration(milliseconds: 500));
     } catch (e) {
-      log(e.toString());
+      CustomDialogWidget.closeLoading();
+      await CustomDialogWidget.showDialogProblem(
+        title: 'Failed',
+        description: e.toString(),
+        duration: 5,
+      );
+
+      reInitTheState();
     }
   }
 
@@ -467,8 +520,21 @@ class AttendEventController extends GetxController {
     try {
       user = await LocalDbService.getUserLocalData();
     } catch (e) {
-      log(e.toString());
+      CustomDialogWidget.showDialogProblem(
+        title: 'Failed',
+        description: e.toString(),
+      );
     }
+  }
+
+  void reInitTheState() {
+    stateLiveness.value = const UIState.idle();
+    stateTakePicture.value = const UIState.idle();
+    countDown.value = 5;
+    rightMotion = 0;
+    isOnDetectionFace = false;
+    setUpMotionType();
+    _streamCamera(cameraController.description);
   }
 
   @override
@@ -485,7 +551,7 @@ class AttendEventController extends GetxController {
     setUpMotionType();
     setEventDataFromArgs();
     getUserPosition();
-    // streamUserPosition();
+    streamUserPosition();
     userLocalData();
     super.onInit();
   }

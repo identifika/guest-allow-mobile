@@ -90,7 +90,7 @@ class SelectUsersController extends GetxController {
   }
 
   void setSelectUsers(List<UserModel> users) {
-    selectedUsers = users;
+    selectedUsers = users.toList();
     idSelectedUsers = users.map((e) => e.id ?? '').toList();
     update(['users']);
   }

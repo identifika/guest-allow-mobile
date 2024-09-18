@@ -37,28 +37,33 @@ const UserLocalDataSchema = CollectionSchema(
       name: r'faceIdentifier',
       type: IsarType.string,
     ),
-    r'name': PropertySchema(
+    r'fcmToken': PropertySchema(
       id: 4,
+      name: r'fcmToken',
+      type: IsarType.string,
+    ),
+    r'name': PropertySchema(
+      id: 5,
       name: r'name',
       type: IsarType.string,
     ),
     r'photo': PropertySchema(
-      id: 5,
+      id: 6,
       name: r'photo',
       type: IsarType.string,
     ),
     r'token': PropertySchema(
-      id: 6,
+      id: 7,
       name: r'token',
       type: IsarType.string,
     ),
     r'updatedAt': PropertySchema(
-      id: 7,
+      id: 8,
       name: r'updatedAt',
       type: IsarType.string,
     ),
     r'userId': PropertySchema(
-      id: 8,
+      id: 9,
       name: r'userId',
       type: IsarType.string,
     )
@@ -108,6 +113,12 @@ int _userLocalDataEstimateSize(
     }
   }
   {
+    final value = object.fcmToken;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
+  {
     final value = object.name;
     if (value != null) {
       bytesCount += 3 + value.length * 3;
@@ -150,11 +161,12 @@ void _userLocalDataSerialize(
   writer.writeString(offsets[1], object.email);
   writer.writeString(offsets[2], object.emailVerifiedAt);
   writer.writeString(offsets[3], object.faceIdentifier);
-  writer.writeString(offsets[4], object.name);
-  writer.writeString(offsets[5], object.photo);
-  writer.writeString(offsets[6], object.token);
-  writer.writeString(offsets[7], object.updatedAt);
-  writer.writeString(offsets[8], object.userId);
+  writer.writeString(offsets[4], object.fcmToken);
+  writer.writeString(offsets[5], object.name);
+  writer.writeString(offsets[6], object.photo);
+  writer.writeString(offsets[7], object.token);
+  writer.writeString(offsets[8], object.updatedAt);
+  writer.writeString(offsets[9], object.userId);
 }
 
 UserLocalData _userLocalDataDeserialize(
@@ -168,12 +180,13 @@ UserLocalData _userLocalDataDeserialize(
     email: reader.readStringOrNull(offsets[1]),
     emailVerifiedAt: reader.readStringOrNull(offsets[2]),
     faceIdentifier: reader.readStringOrNull(offsets[3]),
+    fcmToken: reader.readStringOrNull(offsets[4]),
     id: id,
-    name: reader.readStringOrNull(offsets[4]),
-    photo: reader.readStringOrNull(offsets[5]),
-    token: reader.readStringOrNull(offsets[6]),
-    updatedAt: reader.readStringOrNull(offsets[7]),
-    userId: reader.readStringOrNull(offsets[8]),
+    name: reader.readStringOrNull(offsets[5]),
+    photo: reader.readStringOrNull(offsets[6]),
+    token: reader.readStringOrNull(offsets[7]),
+    updatedAt: reader.readStringOrNull(offsets[8]),
+    userId: reader.readStringOrNull(offsets[9]),
   );
   return object;
 }
@@ -202,6 +215,8 @@ P _userLocalDataDeserializeProp<P>(
     case 7:
       return (reader.readStringOrNull(offset)) as P;
     case 8:
+      return (reader.readStringOrNull(offset)) as P;
+    case 9:
       return (reader.readStringOrNull(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -915,6 +930,160 @@ extension UserLocalDataQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.greaterThan(
         property: r'faceIdentifier',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<UserLocalData, UserLocalData, QAfterFilterCondition>
+      fcmTokenIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'fcmToken',
+      ));
+    });
+  }
+
+  QueryBuilder<UserLocalData, UserLocalData, QAfterFilterCondition>
+      fcmTokenIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'fcmToken',
+      ));
+    });
+  }
+
+  QueryBuilder<UserLocalData, UserLocalData, QAfterFilterCondition>
+      fcmTokenEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'fcmToken',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserLocalData, UserLocalData, QAfterFilterCondition>
+      fcmTokenGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'fcmToken',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserLocalData, UserLocalData, QAfterFilterCondition>
+      fcmTokenLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'fcmToken',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserLocalData, UserLocalData, QAfterFilterCondition>
+      fcmTokenBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'fcmToken',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserLocalData, UserLocalData, QAfterFilterCondition>
+      fcmTokenStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'fcmToken',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserLocalData, UserLocalData, QAfterFilterCondition>
+      fcmTokenEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'fcmToken',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserLocalData, UserLocalData, QAfterFilterCondition>
+      fcmTokenContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'fcmToken',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserLocalData, UserLocalData, QAfterFilterCondition>
+      fcmTokenMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'fcmToken',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserLocalData, UserLocalData, QAfterFilterCondition>
+      fcmTokenIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'fcmToken',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<UserLocalData, UserLocalData, QAfterFilterCondition>
+      fcmTokenIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'fcmToken',
         value: '',
       ));
     });
@@ -1805,6 +1974,19 @@ extension UserLocalDataQuerySortBy
     });
   }
 
+  QueryBuilder<UserLocalData, UserLocalData, QAfterSortBy> sortByFcmToken() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'fcmToken', Sort.asc);
+    });
+  }
+
+  QueryBuilder<UserLocalData, UserLocalData, QAfterSortBy>
+      sortByFcmTokenDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'fcmToken', Sort.desc);
+    });
+  }
+
   QueryBuilder<UserLocalData, UserLocalData, QAfterSortBy> sortByName() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'name', Sort.asc);
@@ -1922,6 +2104,19 @@ extension UserLocalDataQuerySortThenBy
     });
   }
 
+  QueryBuilder<UserLocalData, UserLocalData, QAfterSortBy> thenByFcmToken() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'fcmToken', Sort.asc);
+    });
+  }
+
+  QueryBuilder<UserLocalData, UserLocalData, QAfterSortBy>
+      thenByFcmTokenDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'fcmToken', Sort.desc);
+    });
+  }
+
   QueryBuilder<UserLocalData, UserLocalData, QAfterSortBy> thenById() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'id', Sort.asc);
@@ -2028,6 +2223,13 @@ extension UserLocalDataQueryWhereDistinct
     });
   }
 
+  QueryBuilder<UserLocalData, UserLocalData, QDistinct> distinctByFcmToken(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'fcmToken', caseSensitive: caseSensitive);
+    });
+  }
+
   QueryBuilder<UserLocalData, UserLocalData, QDistinct> distinctByName(
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
@@ -2095,6 +2297,12 @@ extension UserLocalDataQueryProperty
       faceIdentifierProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'faceIdentifier');
+    });
+  }
+
+  QueryBuilder<UserLocalData, String?, QQueryOperations> fcmTokenProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'fcmToken');
     });
   }
 

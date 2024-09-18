@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:guest_allow/configs/themes/main_color.dart';
+import 'package:guest_allow/constants/commons/asset_constant.dart';
 import 'package:guest_allow/modules/features/face_liveness/controllers/face_liveness_guide_controller.dart';
 import 'package:guest_allow/modules/features/face_liveness/extensions/itteration_ext.dart';
 import 'package:guest_allow/modules/features/face_liveness/view/ui/step_wizard_widget.dart';
@@ -13,13 +14,9 @@ class FaceLivenessGuideScreen extends StatelessWidget {
     Get.put(FaceLivenessGuideController());
     var controller = FaceLivenessGuideController.to;
     return Scaffold(
-      // appBar: const GradientAppBar(
-      //   rounded: false,
-      //   title: 'Daftarkan Wajah',
-      // ),
       appBar: AppBar(
         title: Text(
-          'Daftarkan Wajah',
+          'Enroll Face',
           style: TextStyle(
             color: Colors.black,
             fontSize: 18.sp,
@@ -42,20 +39,22 @@ class FaceLivenessGuideScreen extends StatelessWidget {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            SizedBox(height: 40.w),
+            SizedBox(height: 24.h),
             Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Image.asset(
-                //   AssetCons.backgroundPerson,
-                //   height: 256.h,
-                //   fit: BoxFit.fitHeight,
-                // ),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12.r),
+                  child: Image.asset(
+                    AssetConstant.tutorial,
+                    height: 0.48.sh,
+                  ),
+                ),
                 SizedBox(
                   height: 24.h,
                 ),
                 Text(
-                  'Pendaftaran Wajah Untuk Fitur Pengenalan Wajah',
+                  'Face Registration For Facial Recognition Features',
                   style: TextStyle(
                     color: Colors.black,
                     fontSize: 20.sp,
@@ -69,7 +68,7 @@ class FaceLivenessGuideScreen extends StatelessWidget {
                     horizontal: 40.w,
                   ),
                   child: Text(
-                    'Pastikan wajah Anda terlihat di dalam bingkai dan ikuti proses pengenalan wajah',
+                    'Make sure your face is visible in the frame and follow the facial recognition process',
                     style: TextStyle(
                       fontSize: 16.sp,
                       color: Colors.black,
@@ -80,39 +79,6 @@ class FaceLivenessGuideScreen extends StatelessWidget {
                 ),
               ],
             ),
-            SizedBox(height: 15.h),
-            // GestureDetector(
-            //   onTap: () {
-            //     // DialogService.showDrawerGeneral(
-            //     //   withStrip: true,
-            //     //   radius: 24,
-            //     //   content: DrawerContentGuidanceWidget(
-            //     //     title: 'Verifikasi Wajah',
-            //     //     desc: 'Follow the steps below for successful verification',
-            //     //     instructions: controller.listInstructions,
-            //     //   ),
-            //     // );
-            //   },
-            //   child: Row(
-            //     crossAxisAlignment: CrossAxisAlignment.center,
-            //     mainAxisAlignment: MainAxisAlignment.center,
-            //     children: [
-            //       Text(
-            //         "Lihat Panduan",
-            //         style: TextStyle(
-            //           fontSize: 16.sp,
-            //           fontWeight: FontWeight.w700,
-            //           color: CustomColors.purple,
-            //         ),
-            //       ),
-            //       const Icon(
-            //         Icons.chevron_right,
-            //         color: CustomColors.purple,
-            //       ),
-            //     ],
-            //   ),
-            // ),
-            SizedBox(height: 24.w),
           ],
         ),
       ),
@@ -145,7 +111,7 @@ class FaceLivenessGuideScreen extends StatelessWidget {
                   ),
                 ),
                 child: Text(
-                  'Mulai Daftar Wajah',
+                  'Continue',
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 16.sp,

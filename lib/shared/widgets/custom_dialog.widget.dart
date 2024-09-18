@@ -33,6 +33,7 @@ class CustomDialogWidget {
     bool barrierDismissible = true,
     EdgeInsetsGeometry padding = const EdgeInsets.all(16),
     ScrollPhysics? physics,
+    int? duration,
   }) async {
     return await Get.dialog<T>(
       PopScope(
@@ -66,6 +67,7 @@ class CustomDialogWidget {
     String title = 'Upss, something went wrong',
     String textButton = 'Close',
     bool barrierDismissible = true,
+    int? duration,
   }) async {
     return await showDialogGeneral<T>(
       barrierDismissible: barrierDismissible,
@@ -79,6 +81,7 @@ class CustomDialogWidget {
         title: title,
         textPositiveButton: textButton,
         imagePath: AssetConstant.drawDialogError,
+        duration: duration,
       ),
     );
   }
@@ -90,6 +93,7 @@ class CustomDialogWidget {
     String textButton = 'Close',
     bool barrierDismissible = true,
     Color? descColor,
+    int? duration,
   }) async {
     return await showDialogGeneral<T>(
       barrierDismissible: barrierDismissible,
@@ -104,6 +108,7 @@ class CustomDialogWidget {
         title: title,
         textPositiveButton: textButton,
         imagePath: AssetConstant.drawDialogSuccess,
+        duration: duration,
       ),
     );
   }
@@ -116,6 +121,7 @@ class CustomDialogWidget {
     final String textPositiveButton = 'Ok',
     final String textNegativeButton = 'Close',
     final String imagePath = AssetConstant.drawDialogQuestion,
+    final Widget? customButton,
     bool barrierDismissible = true,
     bool isHorizontal = true,
     Color? descColor,
@@ -133,6 +139,7 @@ class CustomDialogWidget {
         onTapNegativeButton: onTapNegativeButton,
         isHorizontal: isHorizontal,
         descColors: descColor,
+        customButton: customButton,
       ),
     );
   }

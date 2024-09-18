@@ -20,6 +20,13 @@ final ThemeData mainTheme = ThemeData(
     color: MainColor.primary,
     size: 24.sp,
   ),
+  buttonTheme: ButtonThemeData(
+    buttonColor: MainColor.primary,
+    textTheme: ButtonTextTheme.primary,
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(50),
+    ),
+  ),
   indicatorColor: MainColor.primary,
   inputDecorationTheme: InputDecorationTheme(
     border: OutlineInputBorder(

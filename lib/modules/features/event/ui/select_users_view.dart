@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:guest_allow/configs/themes/main_color.dart';
 import 'package:guest_allow/constants/commons/asset_constant.dart';
 import 'package:guest_allow/modules/features/event/controllers/select_users.controller.dart';
+import 'package:guest_allow/shared/customs/custom_loadmore.widget.dart';
 import 'package:guest_allow/shared/widgets/custom_shimmer_widget.dart';
 import 'package:guest_allow/shared/widgets/general_empty_error.widget.dart';
 
@@ -15,7 +16,25 @@ class SelectUsersView extends StatelessWidget {
     final controller = Get.put(SelectUsersController());
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Select Users'),
+        title: Text(
+          'Select Users',
+          style: TextStyle(
+            color: Colors.black,
+            fontSize: 18.sp,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        backgroundColor: Colors.white,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(
+            Icons.arrow_back_ios,
+            color: Colors.black,
+          ),
+          onPressed: () {
+            Get.back();
+          },
+        ),
         actions: [
           IconButton(
             onPressed: () {
@@ -87,6 +106,8 @@ class SelectUsersView extends StatelessWidget {
                         isRefresh: true,
                       );
                     },
+                    color: MainColor.primary,
+                    backgroundColor: MainColor.white,
                     child: Obx(
                       () =>
                           state.usersState.value.whenOrNull(
@@ -118,66 +139,88 @@ class SelectUsersView extends StatelessWidget {
                               ),
                             ),
                             success: (data) {
-                              return ListView.separated(
-                                itemCount: data.data?.length ?? 0,
-                                shrinkWrap: true,
-                                itemBuilder: (context, index) {
-                                  return GestureDetector(
-                                    onTap: () {
-                                      state.selectUser(
-                                          data.data?[index].id ?? "");
-                                    },
-                                    child: ListTile(
-                                      title: Text(data.data?[index].name ?? ''),
-                                      subtitle:
-                                          Text(data.data?[index].email ?? ''),
-                                      selected: state.isSelected(
-                                          data.data?[index].id ?? ""),
-                                      selectedTileColor:
-                                          MainColor.primary.withOpacity(0.1),
-                                      selectedColor: MainColor.primary,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(10),
-                                      ),
-                                      leading: ClipRRect(
-                                        borderRadius: BorderRadius.circular(50),
-                                        child: Image.network(
-                                          data.data?[index].photo ?? '',
-                                          width: 50,
-                                          height: 50,
-                                          fit: BoxFit.cover,
-                                          errorBuilder:
-                                              (context, error, stackTrace) =>
-                                                  Container(
+                              return CustomLoadMore(
+                                isFinish: (data.data ?? []).length >=
+                                    (data.total ?? 0),
+                                textBuilder: DefaultLoadMoreTextBuilder.english,
+                                onLoadMore: () async {
+                                  await state.getRegisteredUsers(
+                                    isLoadMore: true,
+                                  );
+                                  if (controller.usersState.value.whenOrNull(
+                                        success: (data) =>
+                                            data.data?.length ?? 0,
+                                      ) ==
+                                      (data.total ?? 0)) {
+                                    return false;
+                                  } else {
+                                    return true;
+                                  }
+                                },
+                                child: ListView.separated(
+                                  itemCount: data.data?.length ?? 0,
+                                  shrinkWrap: true,
+                                  itemBuilder: (context, index) {
+                                    return GestureDetector(
+                                      onTap: () {
+                                        state.selectUser(
+                                            data.data?[index].id ?? "");
+                                      },
+                                      child: ListTile(
+                                        title:
+                                            Text(data.data?[index].name ?? ''),
+                                        subtitle:
+                                            Text(data.data?[index].email ?? ''),
+                                        selected: state.isSelected(
+                                            data.data?[index].id ?? ""),
+                                        selectedTileColor:
+                                            MainColor.primary.withOpacity(0.1),
+                                        selectedColor: MainColor.primary,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(10),
+                                        ),
+                                        leading: ClipRRect(
+                                          borderRadius:
+                                              BorderRadius.circular(50),
+                                          child: Image.network(
+                                            data.data?[index].photo ?? '',
                                             width: 50,
                                             height: 50,
-                                            color: Colors.grey[300],
-                                            child: Center(
-                                              child: Icon(
-                                                Icons.person,
-                                                color: Colors.grey[500],
-                                              ),
-                                            ),
-                                          ),
-                                          loadingBuilder: (context, child,
-                                              loadingProgress) {
-                                            if (loadingProgress == null) {
-                                              return child;
-                                            }
-                                            return const CustomShimmerWidget
-                                                .avatar(
+                                            fit: BoxFit.cover,
+                                            errorBuilder:
+                                                (context, error, stackTrace) =>
+                                                    Container(
                                               width: 50,
                                               height: 50,
-                                            );
-                                          },
+                                              color: Colors.grey[300],
+                                              child: Center(
+                                                child: Icon(
+                                                  Icons.person,
+                                                  color: Colors.grey[500],
+                                                ),
+                                              ),
+                                            ),
+                                            loadingBuilder: (context, child,
+                                                loadingProgress) {
+                                              if (loadingProgress == null) {
+                                                return child;
+                                              }
+                                              return const CustomShimmerWidget
+                                                  .avatar(
+                                                width: 50,
+                                                height: 50,
+                                              );
+                                            },
+                                          ),
                                         ),
                                       ),
-                                    ),
-                                  );
-                                },
-                                separatorBuilder: (context, index) {
-                                  return const Divider();
-                                },
+                                    );
+                                  },
+                                  separatorBuilder: (context, index) {
+                                    return const Divider();
+                                  },
+                                ),
                               );
                             },
                           ) ??

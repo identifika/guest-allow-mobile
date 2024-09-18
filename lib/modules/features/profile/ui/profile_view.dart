@@ -29,128 +29,140 @@ class ProfileView extends StatelessWidget {
                   SizedBox(
                     height: 32.h,
                   ),
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16.w),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 108.w,
-                          height: 108.w,
-                          decoration: const BoxDecoration(
-                            color: MainColor.primary,
-                            shape: BoxShape.circle,
-                          ),
-                          child: ClipRRect(
-                            borderRadius:
-                                const BorderRadius.all(Radius.circular(50)),
-                            child: Image.network(
-                              controller.user?.photo ?? '',
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) {
-                                return const Icon(
-                                  Icons.person,
-                                  color: Colors.white,
-                                  size: 64,
-                                );
-                              },
-                              loadingBuilder:
-                                  (context, child, loadingProgress) {
-                                if (loadingProgress == null) {
-                                  return child;
-                                }
-                                return const CustomShimmerWidget.avatar();
-                              },
-                            ),
-                          ),
-                        ),
-                        SizedBox(width: 16.w),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                  GetBuilder<ProfileController>(
+                      id: 'profile-view',
+                      builder: (state) {
+                        return Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 16.w),
+                          child: Row(
                             children: [
-                              Text(
-                                controller.user?.name ?? '',
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  fontSize: 24.sp,
-                                  fontWeight: FontWeight.w600,
+                              Container(
+                                width: 108.w,
+                                height: 108.w,
+                                decoration: const BoxDecoration(
+                                  color: MainColor.primary,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: ClipRRect(
+                                  borderRadius: const BorderRadius.all(
+                                      Radius.circular(50)),
+                                  child: Image.network(
+                                    controller.user?.photo ?? '',
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return const Icon(
+                                        Icons.person,
+                                        color: Colors.white,
+                                        size: 64,
+                                      );
+                                    },
+                                    loadingBuilder:
+                                        (context, child, loadingProgress) {
+                                      if (loadingProgress == null) {
+                                        return child;
+                                      }
+                                      return CustomShimmerWidget.avatar(
+                                        width: 108.w,
+                                        height: 108.w,
+                                      );
+                                    },
+                                  ),
                                 ),
                               ),
-                              SizedBox(height: 4.h),
-                              Text(
-                                controller.user?.email ?? '',
-                                style: TextStyle(
-                                  fontSize: 16.sp,
-                                  color: MainColor.blackTextColor,
-                                  fontWeight: FontWeight.w400,
+                              SizedBox(width: 16.w),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      controller.user?.name ?? '',
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        fontSize: 24.sp,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    SizedBox(height: 4.h),
+                                    Text(
+                                      controller.user?.email ?? '',
+                                      style: TextStyle(
+                                        fontSize: 16.sp,
+                                        color: MainColor.blackTextColor,
+                                        fontWeight: FontWeight.w400,
+                                      ),
+                                    ),
+                                    SizedBox(
+                                      height: 8.h,
+                                    ),
+                                    Row(
+                                      children: [
+                                        GestureDetector(
+                                          onTap: () async {
+                                            await Get.toNamed(
+                                                MainRoute.profileEdit);
+                                            controller.updateLocalData();
+                                          },
+                                          child: Container(
+                                            padding: EdgeInsets.symmetric(
+                                                horizontal: 12.w,
+                                                vertical: 8.h),
+                                            decoration: BoxDecoration(
+                                              color: MainColor.grey
+                                                  .withOpacity(0.3),
+                                              borderRadius: BorderRadius.all(
+                                                Radius.circular(
+                                                  8.r,
+                                                ),
+                                              ),
+                                            ),
+                                            child: Text(
+                                              "Edit Profile",
+                                              style: TextStyle(
+                                                color: Colors.grey[800],
+                                                fontWeight: FontWeight.w400,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                        SizedBox(
+                                          width: 8.w,
+                                        ),
+                                        GestureDetector(
+                                          onTap: () {
+                                            controller.dialogLogout();
+                                          },
+                                          child: Container(
+                                            padding: EdgeInsets.symmetric(
+                                                horizontal: 12.w,
+                                                vertical: 8.h),
+                                            decoration: BoxDecoration(
+                                              color: Colors.redAccent
+                                                  .withOpacity(0.3),
+                                              borderRadius: BorderRadius.all(
+                                                Radius.circular(
+                                                  8.r,
+                                                ),
+                                              ),
+                                            ),
+                                            child: Text(
+                                              "Logout",
+                                              style: TextStyle(
+                                                color: Colors.red[800],
+                                                fontWeight: FontWeight.w400,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
                                 ),
-                              ),
-                              SizedBox(
-                                height: 8.h,
-                              ),
-                              Row(
-                                children: [
-                                  GestureDetector(
-                                    onTap: () {
-                                      Get.toNamed(MainRoute.profileEdit);
-                                    },
-                                    child: Container(
-                                      padding: EdgeInsets.symmetric(
-                                          horizontal: 12.w, vertical: 8.h),
-                                      decoration: BoxDecoration(
-                                        color: MainColor.grey.withOpacity(0.3),
-                                        borderRadius: BorderRadius.all(
-                                          Radius.circular(
-                                            8.r,
-                                          ),
-                                        ),
-                                      ),
-                                      child: Text(
-                                        "Edit Profile",
-                                        style: TextStyle(
-                                          color: Colors.grey[800],
-                                          fontWeight: FontWeight.w400,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  SizedBox(
-                                    width: 8.w,
-                                  ),
-                                  GestureDetector(
-                                    onTap: () {
-                                      controller.dialogLogout();
-                                    },
-                                    child: Container(
-                                      padding: EdgeInsets.symmetric(
-                                          horizontal: 12.w, vertical: 8.h),
-                                      decoration: BoxDecoration(
-                                        color:
-                                            Colors.redAccent.withOpacity(0.3),
-                                        borderRadius: BorderRadius.all(
-                                          Radius.circular(
-                                            8.r,
-                                          ),
-                                        ),
-                                      ),
-                                      child: Text(
-                                        "Logout",
-                                        style: TextStyle(
-                                          color: Colors.red[800],
-                                          fontWeight: FontWeight.w400,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ],
                               ),
                             ],
                           ),
-                        ),
-                      ],
-                    ),
-                  ),
+                        );
+                      }),
                   SizedBox(
                     height: 32.h,
                   ),
@@ -495,6 +507,7 @@ class ProfileView extends StatelessWidget {
                                                 ),
                                                 child: CardThisMonthEvent(
                                                   eventModel: eventModel,
+                                                  showIsImported: true,
                                                 ),
                                               ),
                                             );

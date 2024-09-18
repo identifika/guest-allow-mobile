@@ -27,9 +27,9 @@ class SearchView extends StatelessWidget {
       child: Scaffold(
         body: Container(
           padding: const EdgeInsets.fromLTRB(
-            24,
-            24,
-            24,
+            16,
+            16,
+            16,
             0,
           ),
           child: Column(

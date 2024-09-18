@@ -7,12 +7,11 @@ class UIState<T> with _$UIState<T> {
   const UIState._();
   const factory UIState.success({required T data}) = UIStateSuccess<T>;
   const factory UIState.empty({
-    @Default('Maaf, data masih kosong') String message,
+    @Default('Sorry, data is still empty') String message,
   }) = UIStateEmpty<T>;
   const factory UIState.loading() = UIStateLoading<T>;
   const factory UIState.error({
-    @Default('Upps ada masalah, silahkan tunggu beberapa saat lagi')
-    String message,
+    @Default('Oops, there is a problem, please wait a moment') String message,
   }) = UIStateError<T>;
   const factory UIState.idle() = UIStateIdle<T>;
 

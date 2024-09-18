@@ -1,4 +1,4 @@
-import 'dart:developer' as dev;
+import 'dart:async';
 import 'dart:io';
 import 'dart:math';
 
@@ -12,23 +12,22 @@ import 'package:guest_allow/modules/features/face_liveness/enum/motion_type_enum
 import 'package:guest_allow/modules/features/face_liveness/view/argument/face_liveness_confirmation_argument.dart';
 import 'package:guest_allow/modules/features/face_liveness/view/argument/face_liveness_take_picture_argument.dart';
 import 'package:guest_allow/shared/widgets/custom_dialog.widget.dart';
-import 'package:guest_allow/utils/enums/ui_state.enum.dart';
 import 'package:guest_allow/utils/helpers/file.helper.dart';
 import 'package:guest_allow/utils/services/face_detector.service.dart';
+import 'package:guest_allow/utils/states/ui_state_model/ui_state_model.dart';
 import 'package:path_provider/path_provider.dart';
 
 class FaceLivenessTakePictureController extends GetxController {
   static FaceLivenessTakePictureController get to => Get.find();
-  Rx<UIStateFaceEnum> stateCamera =
-      Rx<UIStateFaceEnum>(UIStateFaceEnum.loading);
-  Rx<UIStateFaceEnum> stateLiveness =
-      Rx<UIStateFaceEnum>(UIStateFaceEnum.loading);
+  Rx<UIState> stateCamera = const UIState.idle().obs;
+  Rx<UIState> stateLiveness = const UIState.idle().obs;
+
+  Rx<UIState<XFile>> stateCapture = const UIState<XFile>.idle().obs;
 
   /// * Variable
   int rightMotion = 0;
   late CameraController cameraController;
   late MotionTypeEnum selectedMotion;
-  late double scaleCamera;
 
   late FaceLivenessTakePictureArgument faceLivenessArgument;
   late Function(String error) onErrorLiveness;
@@ -42,17 +41,24 @@ class FaceLivenessTakePictureController extends GetxController {
   );
 
   bool isOnDetectionFace = false;
+  RxInt countDown = 5.obs;
 
   Map<MotionTypeEnum, String> assetsPath = {
     MotionTypeEnum.blink: AssetConstant.emoticonEyeBlink,
     MotionTypeEnum.shakeHead: AssetConstant.emoticonShakeHead,
   };
   Map<MotionTypeEnum, String> wordings = {
-    MotionTypeEnum.blink: 'Kedipkan Mata',
-    MotionTypeEnum.shakeHead: 'Gelengkan Kepala',
+    MotionTypeEnum.blink: 'Blink Your Eyes',
+    MotionTypeEnum.shakeHead: 'Shake Your Head',
   };
 
+  late double cameraScale;
+  late MotionTypeEnum motionType;
+
+  bool isFaceDetected = false;
+
   late final FaceDetector _faceDetector;
+  XFile? imageFile;
 
   @override
   void onInit() {
@@ -74,8 +80,6 @@ class FaceLivenessTakePictureController extends GetxController {
     }
     faceLivenessArgument = argument;
     onErrorLiveness = argument.onError;
-    var randomIndex = Random().nextInt(2);
-    selectedMotion = MotionTypeEnum.values[randomIndex];
     _faceDetector = FaceDetector(
       options: FaceDetectorOptions(
         enableContours: true,
@@ -83,7 +87,8 @@ class FaceLivenessTakePictureController extends GetxController {
         enableLandmarks: true,
       ),
     );
-    initCamera();
+    cameraInit();
+    setUpMotionType();
     super.onInit();
   }
 
@@ -94,111 +99,153 @@ class FaceLivenessTakePictureController extends GetxController {
     _faceDetector.close();
   }
 
-  void initCamera() async {
-    stateCamera.value = UIStateFaceEnum.loading;
-    stateLiveness.value = UIStateFaceEnum.loading;
-
+  Future<CameraDescription> _initFrontCamera() async {
     var cameras = await availableCameras();
-    var frontCamera = cameras
-        .firstWhere((cam) => cam.lensDirection == CameraLensDirection.front);
+    var frontCamera = cameras.firstWhere(
+      (camera) => camera.lensDirection == CameraLensDirection.front,
+    );
+
     cameraController = CameraController(
       frontCamera,
       ResolutionPreset.high,
       enableAudio: false,
-      imageFormatGroup: (Platform.isAndroid)
+      imageFormatGroup: Platform.isAndroid
           ? ImageFormatGroup.nv21
           : ImageFormatGroup.bgra8888,
     );
+
     await cameraController.initialize();
+    return frontCamera;
+  }
 
-    scaleCamera =
-        (cameraController.value.aspectRatio * Get.mediaQuery.size.aspectRatio);
-    // to prevent scaling down, invert the value
-    if (scaleCamera < 1) scaleCamera = 1 / scaleCamera;
+  void cameraInit() async {
+    // init camera
+    stateCamera.value = const UIState.loading();
+    stateLiveness.value = const UIState.loading();
 
-    await Future.delayed(const Duration(seconds: 3));
-    stateCamera.value = UIStateFaceEnum.success;
+    CameraDescription frontCamera = await _initFrontCamera();
+
+    // scale camera
+    _setCameraScalling();
+
+    await Future.delayed(const Duration(seconds: 2));
+    stateCamera.value = const UIState.success(
+      data: null,
+    );
+
+    await _streamCamera(frontCamera);
+  }
+
+  void _setCameraScalling() {
+    cameraScale =
+        cameraController.value.aspectRatio * Get.mediaQuery.size.aspectRatio;
+
+    if (cameraScale < 1) {
+      cameraScale = 1 / cameraScale;
+    }
+  }
+
+  Future<void> _streamCamera(CameraDescription frontCamera) async {
     await cameraController.startImageStream(
       (image) async {
-        if (isOnDetectionFace) return;
-        isOnDetectionFace = true;
+        if (isFaceDetected) {
+          return;
+        }
+
+        isFaceDetected = true;
         var resFaces = await faceDetectorService.detectFacesFromCameraImage(
           source: image,
           cameraDescription: frontCamera,
-          faceDetector: _faceDetector,
+          faceDetector: faceDetectorService.faceDetector,
         );
 
         await Future.delayed(const Duration(milliseconds: 1000));
-        isOnDetectionFace = false;
-        // return;
+        isFaceDetected = false;
+
         if (resFaces.length > 1) {
-          if (Get.isOverlaysOpen) return;
-          await Future.delayed(const Duration(seconds: 1));
+          if (Get.isOverlaysOpen) {
+            return;
+          }
 
-          CustomDialogWidget.showDialogProblem(
-            title: 'Wajah Terlalu Banyak',
-            description:
-                'Wajah yang terdeteksi terlalu banyak, silakan coba lagi',
+          await Future.delayed(const Duration(seconds: 1));
+          await CustomDialogWidget.showDialogProblem(
+            title: 'Failed',
+            description: 'Only one face is allowed',
+            buttonOnTap: () {
+              Get.back();
+            },
+            duration: 5,
           );
-          selectedMotion = MotionTypeEnum.values[Random().nextInt(3)];
-          stateLiveness.value = UIStateFaceEnum.idle;
-          update(['animation']);
 
           return;
         }
-        if (resFaces.isEmpty) {
-          if (Get.isOverlaysOpen) return;
-          await Future.delayed(const Duration(seconds: 1));
 
-          CustomDialogWidget.showDialogProblem(
-            title: 'Wajah Tidak Terdeteksi',
-            description: 'Pastikan wajah Anda berada di dalam bingkai',
+        if (resFaces.length == 1) {
+          bool isMotionRight = _onMotionCheck(
+            resFaces.first,
+            motionType,
           );
-          selectedMotion = MotionTypeEnum.values[Random().nextInt(3)];
-          stateLiveness.value = UIStateFaceEnum.idle;
-          update(['animation']);
-          return;
+
+          if (!isMotionRight) {
+            return;
+          }
+
+          rightMotion++;
+          if (rightMotion < 1) {
+            return;
+          }
+
+          stateLiveness.value = const UIState.success(data: null);
+          // stop camera stream
+          cameraController.stopImageStream();
+          // take picture
+          await startCountDown();
+
+          Future.delayed(const Duration(seconds: 5), () {
+            onTapTakePicture();
+          });
         }
-        bool isMotionRight = _onMotionCheck(resFaces.first);
-        if (!isMotionRight) return;
-        rightMotion++;
-        dev.log(rightMotion.toString(), name: 'right-motion');
-        if (rightMotion < 1) return;
-        stateLiveness.value = UIStateFaceEnum.success;
-        Future.delayed(const Duration(milliseconds: 2000), () {
-          onTapTakePicture();
-        });
-        dev.log(rightMotion.toString());
       },
     );
   }
 
+  Future<void> startCountDown() async {
+    Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (countDown.value == 0) {
+        timer.cancel();
+        return;
+      }
+
+      countDown.value--;
+    });
+  }
+
   void onTapTakePicture() async {
     try {
-      // await cameraController.stopImageStream();
-      // await Future.delayed(const Duration(milliseconds: 1000));
-      // await cameraController.pausePreview();
       CustomDialogWidget.showLoading();
+      stateCapture.value = const UIState.loading();
+
       XFile? file = await cameraController.takePicture();
 
       final dir = await getTemporaryDirectory();
       int randomNumber = Random().nextInt(100000);
       final targetPath =
-          '${dir.absolute.path}/${randomNumber}temp.${FileHelper.getFileExtension(file.name)}';
+          '${dir.path}/${randomNumber}temp.${FileHelper.getFileExtension(file.name)}';
+
       final result = await FlutterImageCompress.compressAndGetFile(
         file.path,
         targetPath,
-        minWidth: 680,
-        minHeight: 680,
         quality: 50,
         rotate: 0,
       );
 
       if (result == null) {
-        CustomDialogWidget.showDialogProblem(
-          title: 'Terjadi Kesalahan',
-          description: 'Silakan coba lagi',
+        await CustomDialogWidget.showDialogProblem(
+          title: 'Failed',
+          description: 'Please try again',
+          duration: 5,
         );
+        reInitTheState();
         return;
       }
 
@@ -211,46 +258,73 @@ class FaceLivenessTakePictureController extends GetxController {
       CustomDialogWidget.closeLoading();
 
       if (faces.isEmpty) {
-        CustomDialogWidget.showDialogProblem(
-          title: 'Wajah Tidak Terdeteksi'.tr,
-          description: 'Pastikan wajah Anda berada di dalam bingkai'.tr,
+        await CustomDialogWidget.showDialogProblem(
+          title: 'Face Not Detected',
+          description: 'Please try again',
+          duration: 5,
         );
-
-        initCamera();
+        reInitTheState();
 
         return;
       }
 
       if (faces.length > 1) {
-        CustomDialogWidget.showDialogProblem(
-          title: 'Wajah Terlalu Banyak'.tr,
-          description:
-              'Wajah yang terdeteksi terlalu banyak, silakan coba lagi'.tr,
+        await CustomDialogWidget.showDialogProblem(
+          title: 'Failed',
+          description: 'Only one face is allowed',
+          duration: 5,
         );
-
-        initCamera();
+        reInitTheState();
 
         return;
       }
 
-      Future.delayed(const Duration(milliseconds: 500), () {
-        Get.offNamed(
-          MainRoute.faceLivenessConfirmation,
-          arguments: FaceLivenessConfirmationArgument(
-            faceLivenessArgument: faceLivenessArgument,
-            file: File(
-              result.path,
+      stateCapture.value = UIState.success(data: file);
+      imageFile = file;
+
+      if (faces.length == 1) {
+        Future.delayed(const Duration(milliseconds: 500), () {
+          Get.offNamed(
+            MainRoute.faceLivenessConfirmation,
+            arguments: FaceLivenessConfirmationArgument(
+              faceLivenessArgument: faceLivenessArgument,
+              file: File(
+                result.path,
+              ),
             ),
-          ),
-        );
-      });
+          );
+        });
+      }
+
+      await Future.delayed(const Duration(milliseconds: 500));
     } catch (e) {
-      dev.log(e.toString());
+      reInitTheState();
+      CustomDialogWidget.closeLoading();
+      CustomDialogWidget.showDialogProblem(
+        title: 'Failed',
+        description: 'Please try again',
+      );
     }
   }
 
-  bool _onMotionCheck(Face face) {
-    if (selectedMotion == MotionTypeEnum.blink) {
+  void reInitTheState() {
+    stateLiveness.value = const UIState.idle();
+    stateCapture.value = const UIState.idle();
+    countDown.value = 5;
+    rightMotion = 0;
+    isFaceDetected = false;
+    setUpMotionType();
+    _streamCamera(cameraController.description);
+  }
+
+  void setUpMotionType() {
+    Random random = Random();
+    int randomNumber = random.nextInt(2);
+    motionType = MotionTypeEnum.values[randomNumber];
+  }
+
+  bool _onMotionCheck(Face face, MotionTypeEnum motionType) {
+    if (motionType == MotionTypeEnum.blink) {
       if ((face.leftEyeOpenProbability ?? 0) > 0.1) return false;
       if ((face.rightEyeOpenProbability ?? 0) > 0.1) return false;
       return true;
@@ -263,5 +337,3 @@ class FaceLivenessTakePictureController extends GetxController {
     }
   }
 }
-
-// 089501929242

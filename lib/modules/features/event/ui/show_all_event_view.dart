@@ -3,6 +3,7 @@ import 'package:flutter_conditional_rendering/flutter_conditional_rendering.dart
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:guest_allow/configs/routes/main_route.dart';
+import 'package:guest_allow/configs/themes/main_color.dart';
 import 'package:guest_allow/modules/features/event/controllers/show_all_event.controller.dart';
 import 'package:guest_allow/modules/features/main/models/event_model.dart';
 import 'package:guest_allow/shared/customs/custom_loadmore.widget.dart';
@@ -24,6 +25,7 @@ class ShowAllEventView extends StatelessWidget {
             return controller.isSearching.isTrue
                 ? TextField(
                     controller: controller.searchController,
+                    focusNode: controller.searchFocus,
                     onSubmitted: (value) {
                       controller.getPopularEvent(
                         isRefresh: true,
@@ -39,6 +41,11 @@ class ShowAllEventView extends StatelessWidget {
                     controller.eventType == AllEventType.popular
                         ? 'Popular Event'
                         : 'This Month Event',
+                    style: TextStyle(
+                      color: Colors.black,
+                      fontSize: 18.sp,
+                      fontWeight: FontWeight.w800,
+                    ),
                   );
           },
         ),
@@ -65,7 +72,11 @@ class ShowAllEventView extends StatelessWidget {
                 fallbackBuilder: (context) => IconButton(
                   onPressed: () {
                     controller.isSearching.value = true;
+
                     controller.update(['search']);
+                    FocusScope.of(context).requestFocus(controller.searchFocus);
+
+                    // focus search
                   },
                   icon: const Icon(
                     Icons.search,
@@ -85,8 +96,11 @@ class ShowAllEventView extends StatelessWidget {
           onRefresh: () async {
             controller.getPopularEvent(
               isRefresh: true,
+              keyword: controller.searchController.text,
             );
           },
+          color: MainColor.primary,
+          backgroundColor: MainColor.white,
           child: Obx(
             () =>
                 controller.eventState.value.whenOrNull(
@@ -103,7 +117,10 @@ class ShowAllEventView extends StatelessWidget {
                       isFinish: (data.data ?? []).length >= (data.total ?? 0),
                       textBuilder: DefaultLoadMoreTextBuilder.english,
                       onLoadMore: () async {
-                        await controller.getPopularEvent(isLoadMore: true);
+                        await controller.getPopularEvent(
+                          isLoadMore: true,
+                          keyword: controller.searchController.text,
+                        );
                         if (controller.eventState.value.whenOrNull(
                               success: (data) => data.data?.length ?? 0,
                             ) ==
@@ -148,11 +165,13 @@ class ShowAllEventView extends StatelessWidget {
                     width: 1.sw,
                     alignment: Alignment.topCenter,
                     child: GeneralEmptyErrorWidget(
-                      titleText: 'Maaf, masih belum ada event yang tersedia',
+                      titleText:
+                          'Sorry, there is no event data available right now',
                       descText: message,
                       onRefresh: () {
                         controller.getPopularEvent(
                           isRefresh: true,
+                          keyword: controller.searchController.text,
                         );
                       },
                     ),

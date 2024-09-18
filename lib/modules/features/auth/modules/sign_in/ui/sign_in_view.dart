@@ -45,15 +45,13 @@ class SignInView extends StatelessWidget {
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    SizedBox(
-                      height: 72.h,
-                    ),
                     Text(
-                      "Sign In",
+                      "Hi, Welcome Back!",
                       style: TextStyle(
                         color: MainColor.black,
-                        fontSize: 32.r,
+                        fontSize: 32.sp,
                         fontWeight: FontWeight.w900,
                       ),
                     ),
@@ -111,18 +109,23 @@ class SignInView extends StatelessWidget {
                     SizedBox(
                       height: 20.h,
                     ),
-                    const Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        Text(
-                          "Forgot Password?",
-                          style: TextStyle(
-                            color: MainColor.black,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w400,
+                    GestureDetector(
+                      onTap: () {
+                        Get.toNamed(MainRoute.forgotPassword);
+                      },
+                      child: const Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          Text(
+                            "Forgot Password?",
+                            style: TextStyle(
+                              color: MainColor.black,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w400,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                     SizedBox(
                       height: 20.h,
@@ -190,7 +193,104 @@ class SignInView extends StatelessWidget {
                       ),
                     ),
                     SizedBox(
+                      height: 72.h,
+                    ),
+                    const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Expanded(
+                          child: Divider(
+                            color: MainColor.grey,
+                            thickness: 1,
+                            height: 1,
+                            indent: 0,
+                            endIndent: 16,
+                          ),
+                        ),
+                        Text(
+                          "Or sign in as",
+                          style: TextStyle(
+                            color: MainColor.black,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w400,
+                          ),
+                        ),
+                        Expanded(
+                          child: Divider(
+                            color: MainColor.grey,
+                            thickness: 1,
+                            height: 1,
+                            indent: 16,
+                            endIndent: 0,
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(
+                      height: 24.h,
+                    ),
+                    // receptionist guest
+                    SizedBox(
+                      width: 1.sw,
+                      height: 56.h,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          controller.signInAsReceptionist(context);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.transparent,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            side: const BorderSide(
+                              color: MainColor.black,
+                              width: 1,
+                            ),
+                          ),
+                          elevation: 0,
+                        ),
+                        child: const Text(
+                          "Receptionist",
+                          style: TextStyle(
+                            color: MainColor.black,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    SizedBox(
                       height: 12.h,
+                    ),
+
+                    // guest
+                    SizedBox(
+                      width: 1.sw,
+                      height: 56.h,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          controller.signInAsGuest(context);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.transparent,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            side: const BorderSide(
+                              color: MainColor.primary,
+                              width: 1,
+                            ),
+                          ),
+                          elevation: 0,
+                        ),
+                        child: const Text(
+                          "Guest",
+                          style: TextStyle(
+                            color: MainColor.primary,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
                     ),
                   ],
                 ),

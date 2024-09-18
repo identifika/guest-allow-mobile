@@ -24,4 +24,6 @@ abstract class AssetConstant {
   static const String drawNoImages = 'assets/img/draw_no_images.png';
   static const String drawNoSearchResult =
       'assets/img/draw_no_search_result.png';
+
+  static const String tutorial = 'assets/img/tutorial.png';
 }

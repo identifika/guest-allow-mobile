@@ -18,4 +18,8 @@ class ApiStatusHelper {
       return ApiStatusEnum.clientError;
     }
   }
+
+  static bool isApiSuccess(int? status) {
+    return getApiStatus(status ?? 0) == ApiStatusEnum.success;
+  }
 }

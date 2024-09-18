@@ -1,13 +1,21 @@
+import 'dart:developer';
+
 import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:guest_allow/configs/routes/main_route.dart';
 import 'package:guest_allow/modules/features/event/controllers/detail_map.controller.dart';
 import 'package:guest_allow/modules/features/event/models/responses/event_detail.response.dart';
 import 'package:guest_allow/modules/features/event/repositories/event.repository.dart';
 import 'package:guest_allow/modules/features/home/responses/get_popular_event.response.dart';
 import 'package:guest_allow/modules/features/main/models/event_model.dart';
 import 'package:guest_allow/modules/global_controllers/maps.controller.dart';
+import 'package:guest_allow/modules/global_models/responses/general_response_model.dart';
+import 'package:guest_allow/modules/global_models/responses/nominatim_maps/find_place.response.dart';
+import 'package:guest_allow/modules/global_repositories/maps.repository.dart';
 import 'package:guest_allow/shared/widgets/custom_dialog.widget.dart';
+import 'package:guest_allow/shared/widgets/dialog_content_general.widget.dart';
 import 'package:guest_allow/utils/db/user_collection.db.dart';
 import 'package:guest_allow/utils/enums/api_status.enum.dart';
 import 'package:guest_allow/utils/helpers/api_status.helper.dart';
@@ -71,6 +79,7 @@ class DetailEventController extends GetxController {
   final EventRepository _eventRepository = EventRepository();
   final FaceRecognitionService _faceRecognitionService =
       FaceRecognitionService();
+  final MapsRepository _mapsRepository = MapsRepository();
 
   Rx<UIState<EventData?>> eventDetailState =
       const UIState<EventData?>.idle().obs;
@@ -168,17 +177,30 @@ class DetailEventController extends GetxController {
     }
   }
 
-  void dialogJoinEvent(String id, String eventName) {
-    UserLocalData? user = LocalDbService.getUserLocalDataSync();
-    if (user?.faceIdentifier == null) {
-      CustomDialogWidget.showDialogProblem(
-        title: 'Failed',
-        description: 'You have not enrolled your face yet',
-        buttonOnTap: () {
+  void dialogEnrollFace({
+    String? type,
+    String? title,
+  }) {
+    CustomDialogWidget.showDialogGeneral(
+      content: DialogContentGeneralWidget.oneButton(
+        imagePath: '',
+        description:
+            'You need to set up your face recognition before ${type ?? 'joining'} the event. Click "Ok" to set up your face recognition',
+        title: title ?? 'Join Event',
+        textPositiveButton: 'Ok',
+        barrierDismissible: true,
+        onTapPositiveButton: () {
           Get.back();
           _faceRecognitionService.enrollFace();
         },
-      );
+      ),
+    );
+  }
+
+  void dialogJoinEvent(String id, String eventName) {
+    UserLocalData? user = LocalDbService.getUserLocalDataSync();
+    if (user?.faceIdentifier == null) {
+      dialogEnrollFace();
       return;
     }
 
@@ -223,7 +245,41 @@ class DetailEventController extends GetxController {
     }
   }
 
-  void attendOnlineEvent(String url) async {
+  void attendOnlineEvent(String url, EventData eventModel) async {
+    if (eventModel.myArrival != null) {
+      await _openUrl(url);
+      return;
+    }
+    var status = await Get.toNamed(
+      MainRoute.attendEvent,
+      arguments: eventModel,
+    );
+    if (status == true) {
+      CustomDialogWidget.showDialogChoice(
+        title: "You're all set!",
+        description: eventModel.type == 0
+            ? "You're now checked in to the event. Would you like to proceed to the event link now?"
+            : "You're now checked in to the event.",
+        onTapPositiveButton: () async {
+          if (eventModel.type == 0) {
+            await _openUrl(url);
+          } else {
+            getEventDetail(eventModel.id ?? "");
+          }
+        },
+        onTapNegativeButton: () {
+          Get.back();
+        },
+      );
+    } else {
+      CustomDialogWidget.showDialogProblem(
+        title: 'Failed',
+        description: 'Failed to attend the event',
+      );
+    }
+  }
+
+  Future<void> _openUrl(String url) async {
     Uri uri = Uri.parse(url);
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri);
@@ -249,6 +305,166 @@ class DetailEventController extends GetxController {
       CustomDialogWidget.showDialogProblem(
         title: 'Failed',
         description: 'Failed to copy url to clipboard',
+      );
+    }
+  }
+
+  void receiveAttende(EventData eventData) {
+    CustomDialogWidget.showDialogChoice(
+      title: 'Receive Attendee',
+      description:
+          'Ensure you are at the event location with your phone connected to the internet and GPS enabled. Additionally, confirm that your power source is ready. Are you sure you want to receive the attendee?',
+      onTapPositiveButton: () {
+        Get.back();
+        goToReceiveAttendee(eventData);
+      },
+      onTapNegativeButton: () => Get.back(),
+    );
+  }
+
+  void goToReceiveAttendee(EventData eventData) async {
+    CustomDialogWidget.showLoading();
+
+    bool isLocationServiceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!isLocationServiceEnabled) {
+      CustomDialogWidget.closeLoading();
+      CustomDialogWidget.showDialogProblem(
+        title: 'Failed',
+        description: 'Location service is disabled',
+      );
+      return;
+    }
+
+    LocationPermission permission = await Geolocator.checkPermission();
+
+    if (permission == LocationPermission.denied ||
+        permission == LocationPermission.deniedForever) {
+      CustomDialogWidget.closeLoading();
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied ||
+          permission == LocationPermission.deniedForever) {
+        CustomDialogWidget.showDialogProblem(
+          title: 'Failed',
+          description: 'Location permission is denied',
+        );
+        return;
+      }
+    }
+
+    Position position = await Geolocator.getCurrentPosition();
+    LatLng eventLocation = LatLng(
+      double.parse(eventData.latitude ?? '0'),
+      double.parse(eventData.longitude ?? '0'),
+    );
+    double distanceInMeters = Geolocator.distanceBetween(
+      position.latitude,
+      position.longitude,
+      eventLocation.latitude,
+      eventLocation.longitude,
+    );
+
+    var radius = double.parse("${eventData.radius ?? 0}");
+
+    if (distanceInMeters > radius) {
+      CustomDialogWidget.closeLoading();
+      CustomDialogWidget.showDialogProblem(
+        title: 'Failed',
+        description: 'You are not at the event location',
+      );
+      return;
+    }
+
+    GeneralResponseModel response =
+        await _mapsRepository.nominatimReverseGeocode(
+      latitude: position.latitude,
+      longitude: position.longitude,
+    );
+
+    PlaceFeature? userAddress;
+
+    if (ApiStatusHelper.getApiStatus(response.statusCode ?? 0) ==
+        ApiStatusEnum.success) {
+      if (((response.meta as NominatimFindPlaceResponse).features ?? [])
+          .isEmpty) {
+        CustomDialogWidget.closeLoading();
+        CustomDialogWidget.showDialogProblem(
+          title: 'Failed',
+          description: 'Failed to get location detail',
+        );
+      } else {
+        var data = (response.meta as NominatimFindPlaceResponse).features;
+        userAddress = data?.first;
+      }
+    } else {
+      CustomDialogWidget.closeLoading();
+      CustomDialogWidget.showDialogProblem(
+        title: 'Failed',
+        description: response.message ?? 'Failed to get location detail',
+      );
+    }
+
+    CustomDialogWidget.closeLoading();
+
+    Get.toNamed(
+      MainRoute.receiveAttendees,
+      arguments: {
+        'eventData': eventData,
+        'eventDetailType': eventDetailType,
+        'address': userAddress,
+        'position': position,
+      },
+    );
+  }
+
+  void recreateEvent(EventData eventData) {
+    EventData newEventData = eventData.copyWith(
+      id: null,
+      startDate: DateTime.now().toIso8601String(),
+      endDate: DateTime.now().add(const Duration(days: 1)).toIso8601String(),
+      guests: null,
+      receptionistGuests: null,
+    );
+    Get.toNamed(
+      MainRoute.createEvent,
+      arguments: newEventData,
+    );
+  }
+
+  void deleteEventConfirmation(String eventId) {
+    CustomDialogWidget.showDialogChoice(
+      title: 'Delete Event',
+      description:
+          "Are you sure you want to delete this event? Any associated participants or receptionists will no longer have access to the event. Are you sure you want to proceed?",
+      onTapPositiveButton: () {
+        Get.back();
+        deleteEvent(eventId);
+      },
+      onTapNegativeButton: () {
+        Get.back();
+      },
+    );
+  }
+
+  Future<void> deleteEvent(String eventId) async {
+    try {
+      CustomDialogWidget.showLoading();
+
+      var response = await _eventRepository.deleteEvent(
+        eventId: eventId,
+      );
+      CustomDialogWidget.closeLoading();
+
+      if (ApiStatusHelper.isApiSuccess(response.statusCode ?? 0)) {
+        Get.until((route) => route.settings.name == MainRoute.main);
+      } else {
+        log(response.message ?? '');
+        CustomDialogWidget.showDialogProblem(
+          description: response.message ?? 'Failed to delete event',
+        );
+      }
+    } catch (e) {
+      CustomDialogWidget.showDialogProblem(
+        description: 'Failed to delete event',
       );
     }
   }

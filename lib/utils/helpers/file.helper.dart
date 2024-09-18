@@ -1,3 +1,4 @@
+import 'dart:developer';
 import 'dart:io';
 import 'package:guest_allow/utils/extensions/date.extension.dart';
 import 'package:path/path.dart' as path;
@@ -32,7 +33,7 @@ class FileHelper {
     return File(file.path).renameSync(newPath);
   }
 
-  static getFileExtension(String fileName) {
+  static String getFileExtension(String fileName) {
     return fileName.split('.').last;
   }
 
@@ -76,5 +77,59 @@ class FileHelper {
     final commandList = args.map((arg) => arg.replaceAll(' ', '\\ ')).toList();
 
     return commandList.join(' ');
+  }
+
+  static findFileExtension(String fileName) {
+    // get extension from file name
+    // but if the file name is empty, return .jpg
+    // if not null and it's not in the list, return .jpg
+    if (fileName.isEmpty) {
+      return 'jpg';
+    }
+
+    final ext = fileName.split('.').last;
+    if (_listOfAcceptedImageExtension.contains(ext)) {
+      return ext;
+    } else {
+      return 'jpg';
+    }
+  }
+
+  static final _listOfAcceptedImageExtension = [
+    'jpg',
+    'jpeg',
+    'png',
+    'bmp',
+    'webp',
+    'heic',
+    'heif',
+  ];
+
+  static Future<File> getImageFileFromUrl(String url) async {
+    try {
+      final response = await Dio().get(
+        url,
+        options: Options(
+          responseType: ResponseType.bytes,
+          followRedirects: false,
+          validateStatus: (status) {
+            return status! < 500;
+          },
+        ),
+      );
+
+      final dir = await getTemporaryDirectory();
+      int randomNumber = math.Random().nextInt(100000);
+      final targetPath =
+          '${dir.absolute.path}/${randomNumber}temp.${findFileExtension(url)}';
+
+      final file = File(targetPath);
+      await file.writeAsBytes(response.data);
+
+      return file;
+    } on Exception catch (_) {
+      log(_.toString());
+      rethrow;
+    }
   }
 }

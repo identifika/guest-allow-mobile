@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "509348990817",
+    "project_id": "guest-allow-7aff4",
+    "storage_bucket": "guest-allow-7aff4.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:509348990817:android:51aa2f50afedddaf8d7f20",
+        "android_client_info": {
+          "package_name": "com.guest.allow.guest_allow"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDQe9OSfqWIr5HC5k5adDtKjGDjU4Ghffk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

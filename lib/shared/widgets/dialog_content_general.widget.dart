@@ -1,8 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_conditional_rendering/flutter_conditional_rendering.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:get/get.dart';
 import 'package:guest_allow/configs/themes/main_color.dart';
 
-class DialogContentGeneralWidget extends StatelessWidget {
+class DialogContentGeneralWidget extends StatefulWidget {
   final VoidCallback? onTapPositiveButton;
   final VoidCallback? onTapNegativeButton;
   final String description;
@@ -14,6 +18,8 @@ class DialogContentGeneralWidget extends StatelessWidget {
   final String type;
   final bool isHorizontal;
   final Color? descColors;
+  final int? duration;
+  final Widget? customButton;
 
   const DialogContentGeneralWidget.oneButton({
     super.key,
@@ -24,6 +30,8 @@ class DialogContentGeneralWidget extends StatelessWidget {
     required this.textPositiveButton,
     required this.barrierDismissible,
     this.descColors,
+    this.duration,
+    this.customButton,
   })  : type = 'one-button',
         isHorizontal = true,
         textNegativeButton = '',
@@ -41,18 +49,66 @@ class DialogContentGeneralWidget extends StatelessWidget {
     required this.barrierDismissible,
     this.isHorizontal = true,
     this.descColors,
+    this.duration,
+    this.customButton,
   }) : type = 'two-button';
+
+  @override
+  State<DialogContentGeneralWidget> createState() =>
+      _DialogContentGeneralWidgetState();
+}
+
+class _DialogContentGeneralWidgetState
+    extends State<DialogContentGeneralWidget> {
+  bool isCountdown = false;
+  int countdown = 0;
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.duration != null) {
+      isCountdown = true;
+      countdown = widget.duration!;
+      startCountdown();
+    }
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    _timer?.cancel();
+  }
+
+  void startCountdown() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+        if (countdown == 0) {
+          timer.cancel();
+          Get.back();
+        } else {
+          setState(() {
+            countdown--;
+          });
+        }
+
+        if (Get.isDialogOpen == false) {
+          timer.cancel();
+        }
+      });
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return PopScope(
-      canPop: barrierDismissible,
+      canPop: widget.barrierDismissible,
       child: Column(
         children: [
           Visibility(
-            visible: imagePath.isNotEmpty,
+            visible: widget.imagePath.isNotEmpty,
             child: Image.asset(
-              imagePath,
+              widget.imagePath,
               height: 128.h,
               fit: BoxFit.fitHeight,
             ),
@@ -61,9 +117,9 @@ class DialogContentGeneralWidget extends StatelessWidget {
             height: 16.h,
           ),
           Visibility(
-            visible: title.isNotEmpty,
+            visible: widget.title.isNotEmpty,
             child: Text(
-              title,
+              widget.title,
               style: TextStyle(
                 fontSize: 16.sp,
                 fontWeight: FontWeight.w700,
@@ -76,15 +132,15 @@ class DialogContentGeneralWidget extends StatelessWidget {
             height: 8.h,
           ),
           Visibility(
-            visible: description.isNotEmpty,
+            visible: widget.description.isNotEmpty,
             child: Builder(builder: (_) {
-              final leng = description.split(" ").length;
+              final leng = widget.description.split(" ").length;
 
               return Text(
-                description,
+                widget.description,
                 style: TextStyle(
                   fontSize: leng >= 20 ? 14.sp : 16.sp,
-                  color: descColors ?? Colors.black87,
+                  color: widget.descColors ?? Colors.black87,
                 ),
                 textAlign: TextAlign.center,
               );
@@ -94,9 +150,9 @@ class DialogContentGeneralWidget extends StatelessWidget {
             height: 12.h,
           ),
           Visibility(
-            visible: type == 'two-button',
+            visible: widget.type == 'two-button',
             replacement: GestureDetector(
-              onTap: onTapPositiveButton,
+              onTap: widget.onTapPositiveButton,
               child: Container(
                 width: 1.sw,
                 height: 48,
@@ -105,23 +161,35 @@ class DialogContentGeneralWidget extends StatelessWidget {
                   borderRadius: BorderRadius.circular(24.r),
                 ),
                 child: Center(
-                  child: Text(
-                    textPositiveButton,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
+                  child: Conditional.single(
+                    context: context,
+                    conditionBuilder: (BuildContext context) => isCountdown,
+                    widgetBuilder: (BuildContext context) => Text(
+                      '${widget.textPositiveButton} (${countdown.toString()})',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
+                    fallbackBuilder: (BuildContext context) => Text(
+                      widget.textPositiveButton,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
                     ),
                   ),
                 ),
               ),
             ),
-            child: isHorizontal
+            child: widget.isHorizontal
                 ? Row(
                     children: [
                       Expanded(
                         child: GestureDetector(
-                          onTap: onTapPositiveButton,
+                          onTap: widget.onTapPositiveButton,
                           child: Container(
                             width: 1.sw,
                             height: 48,
@@ -131,7 +199,7 @@ class DialogContentGeneralWidget extends StatelessWidget {
                             ),
                             child: Center(
                               child: Text(
-                                textPositiveButton,
+                                widget.textPositiveButton,
                                 style: const TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w600,
@@ -147,7 +215,7 @@ class DialogContentGeneralWidget extends StatelessWidget {
                       ),
                       Expanded(
                         child: GestureDetector(
-                          onTap: onTapNegativeButton,
+                          onTap: widget.onTapNegativeButton,
                           child: Container(
                             width: 1.sw,
                             height: 48,
@@ -161,7 +229,7 @@ class DialogContentGeneralWidget extends StatelessWidget {
                             ),
                             child: Center(
                               child: Text(
-                                textNegativeButton,
+                                widget.textNegativeButton,
                                 style: const TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w600,
@@ -171,13 +239,13 @@ class DialogContentGeneralWidget extends StatelessWidget {
                             ),
                           ),
                         ),
-                      )
+                      ),
                     ],
                   )
                 : Column(
                     children: [
                       GestureDetector(
-                        onTap: onTapPositiveButton,
+                        onTap: widget.onTapPositiveButton,
                         child: Container(
                           width: 1.sw,
                           height: 48,
@@ -187,7 +255,7 @@ class DialogContentGeneralWidget extends StatelessWidget {
                           ),
                           child: Center(
                             child: Text(
-                              textPositiveButton,
+                              widget.textPositiveButton,
                               style: const TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w600,
@@ -201,7 +269,7 @@ class DialogContentGeneralWidget extends StatelessWidget {
                         height: 10.w,
                       ),
                       GestureDetector(
-                        onTap: onTapNegativeButton,
+                        onTap: widget.onTapNegativeButton,
                         child: Container(
                           width: 1.sw,
                           height: 48,
@@ -215,7 +283,7 @@ class DialogContentGeneralWidget extends StatelessWidget {
                           ),
                           child: Center(
                             child: Text(
-                              textNegativeButton,
+                              widget.textNegativeButton,
                               style: const TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w600,
@@ -227,7 +295,16 @@ class DialogContentGeneralWidget extends StatelessWidget {
                       ),
                     ],
                   ),
-          )
+          ),
+          if (widget.customButton != null)
+            Column(
+              children: [
+                SizedBox(
+                  height: 12.h,
+                ),
+                widget.customButton ?? const SizedBox(),
+              ],
+            ),
         ],
       ),
     );

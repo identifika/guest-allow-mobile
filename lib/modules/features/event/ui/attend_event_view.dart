@@ -21,7 +21,9 @@ class AttendEventView extends StatelessWidget {
         () =>
             controller.stateCamera.value.whenOrNull(
               loading: () => const Center(
-                child: CircularProgressIndicator(),
+                child: CircularProgressIndicator(
+                  color: MainColor.primary,
+                ),
               ),
               success: (data) => Obx(
                 () => controller.stateTakePicture.value.maybeWhen(
@@ -57,29 +59,6 @@ class AttendEventView extends StatelessWidget {
                     vertical: 16,
                   ),
                   child: _buildAppBar(context),
-                ),
-              ],
-            ),
-          ),
-        ),
-        Positioned(
-          bottom: 0,
-          left: 0,
-          right: 0,
-          child: Container(
-            color: Colors.black.withOpacity(0.7),
-            padding: const EdgeInsets.symmetric(
-              horizontal: 24,
-              vertical: 16,
-            ),
-            child: Column(
-              children: [
-                Text(
-                  "Your face has been captured",
-                  style: TextStyle(
-                    fontSize: 16.sp,
-                    color: Colors.white,
-                  ),
                 ),
               ],
             ),
@@ -298,7 +277,7 @@ class AttendEventView extends StatelessWidget {
           left: 0,
           right: 0,
           child: Obx(
-            () => controller.isOnArea.value
+            () => controller.isOnArea.value || controller.eventData.type == 0
                 ? Column(
                     children: [
                       Text(
@@ -307,6 +286,7 @@ class AttendEventView extends StatelessWidget {
                           fontSize: 16.sp,
                           color: Colors.white,
                         ),
+                        textAlign: TextAlign.center,
                       ),
                     ],
                   )

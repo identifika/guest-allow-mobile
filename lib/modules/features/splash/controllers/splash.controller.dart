@@ -9,7 +9,7 @@ class SplashController extends GetxController {
     // If not authenticated, navigate to sign in page
     var userData = await LocalDbService.getUserLocalData();
 
-    if (userData != null) {
+    if (userData?.token != null) {
       Future.delayed(
         const Duration(seconds: 2),
         () => Get.offAllNamed(MainRoute.main),
